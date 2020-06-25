@@ -1,0 +1,150 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html{
+    background-color: #eee;
+}
+
+body{
+    font: normal 14px sans-serif;
+}
+
+header{
+    box-sizing: border-box;
+    text-align: center;
+    width: 100%;
+    padding: 25px 40px;
+    background-color: #3A56B7;
+    overflow: hidden;
+}
+
+
+header h1{
+    float: left;
+    font: normal 24px/1.5 'Open Sans', sans-serif;
+    color: #fff;
+}
+
+header a{
+    color:#fff;
+    float: right;
+    text-decoration: none;
+    display: inline-block;
+    padding: 13px 50px;
+    border-radius: 3px;
+    font: bold 14px/1 'Open Sans', sans-serif;
+    text-transform: uppercase;
+    background-color:#F05283;
+
+}
+
+#video-placeholder{
+    max-width: 35%;
+    width: 100%;
+    position: fixed;
+    top: 130px;
+    right: 40px;
+}
+
+#controls{
+    margin-right: 40%;
+}
+
+#controls ul{
+    list-style: none;
+}
+
+#controls pre{
+    border: 6px solid #E7E9F3;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+#controls ul li {
+    margin: 40px;
+}
+
+#controls ul li code{
+    padding: 24px;
+    line-height: 1.45;
+    font-size: 13px;
+}
+
+
+h2{
+    display: block;
+    margin-bottom: 24px;
+    font-size: 26px;
+    color: #43495F;
+}
+
+h2 ~ * {
+    margin-bottom: 24px;
+}
+
+h2 + pre {
+    margin-top: 36px;
+}
+
+.thumbnail{
+    cursor: pointer;
+    margin: 0 10px 20px 0;
+    border: 6px solid #fff;
+    box-shadow: 0 1px 1px #ccc;
+    width: 200px;
+}
+
+#progress-bar{
+    position: relative;
+    width: 100%;
+    height: 20px;
+    cursor: pointer;
+}
+
+
+#controls i {
+    color: #000;
+    font-size: 32px;
+    cursor: pointer;
+}
+
+#volume-input{
+    height: 32px;
+    width: 45px;
+}
+
+#next,
+#prev{
+    display: block;
+}
+
+
+@media (max-width: 1000px) {
+
+
+    header h1{
+        float: none;
+    }
+
+    header a{
+        margin-top: 25px;
+        float: none;
+    }
+
+}
+
+@media (max-width: 1200px) {
+
+    #video-placeholder{
+        max-width: 100%;
+        position: static;
+    }
+
+    #controls{
+        margin-right: 0;
+    }
+
+    #bsaHolder{ display:none;}
+}

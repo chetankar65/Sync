@@ -2,6 +2,31 @@ import os
 from flask import Flask, render_template,jsonify, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 import uuid
+'''
+import urlparse
+
+def get_video_id(value):
+    """
+    Examples:
+    - http://youtu.be/SA2iWivDJiE
+    - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+    - http://www.youtube.com/embed/SA2iWivDJiE
+    - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+    """
+    query = urlparse.urlparse(value)
+    if query.hostname == 'youtu.be':
+        return query.path[1:]
+    if query.hostname in ('www.youtube.com', 'youtube.com'):
+        if query.path == '/watch':
+            p = urlparse.parse_qs(query.query)
+            return p['v'][0]
+        if query.path[:7] == '/embed/':
+            return query.path.split('/')[2]
+        if query.path[:3] == '/v/':
+            return query.path.split('/')[2]
+    # fail?
+    return None
+'''
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = 'somerandomstring'
@@ -27,10 +52,12 @@ def on_join(data):
     username = data['username']
     room = data['code']
     link = data['link']
+    video_id = link.split('=')[1]
+    print(video_id)
     greeting = username + f' has entered the room {room}'
     join_room(room)
     print('Joined room')
-    socketio.emit("allRooms", {'greet': greeting, 'link': link}, room = room)
+    socketio.emit("allRooms", {'greet': greeting, 'link': video_id}, room = room)
 
 @socketio.on('leave')
 def on_leave(data):
@@ -57,7 +84,8 @@ def control_video(data):
     volume = data['volume']
     mute = data['mute']
     seekTo = data['seekTo']
-    socketio.emit('controllers', status, room = room)
+    socketio.emit('controllers', {'status': status, 'time': time, 'volume': volume, 'mute': mute}, room = room)
 '''
+
 if __name__ == '__main__':
     socketio.run(app)
