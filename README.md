@@ -1,3 +1,6 @@
 # sync
-Watch movies , TV shows and listen to music together.
+Watch movies , youtube videos and listen to music together.
 
+Enjoy with your friends.
+
+Uses Flask framework
