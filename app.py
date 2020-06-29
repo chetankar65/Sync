@@ -1,91 +1,118 @@
 import os
-from flask import Flask, render_template,jsonify, request, session
+from flask import Flask, render_template,jsonify, request, session, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 import uuid
-'''
-import urlparse
+from urllib.parse import urlparse, parse_qs
 
-def get_video_id(value):
-    """
-    Examples:
-    - http://youtu.be/SA2iWivDJiE
-    - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
-    - http://www.youtube.com/embed/SA2iWivDJiE
-    - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
-    """
-    query = urlparse.urlparse(value)
-    if query.hostname == 'youtu.be':
-        return query.path[1:]
+def extract_video_id(url):
+    # Examples:
+    # - http://youtu.be/SA2iWivDJiE
+    # - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
+    # - http://www.youtube.com/embed/SA2iWivDJiE
+    # - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
+    query = urlparse(url)
+    if query.hostname == 'youtu.be': return query.path[1:]
     if query.hostname in ('www.youtube.com', 'youtube.com'):
-        if query.path == '/watch':
-            p = urlparse.parse_qs(query.query)
-            return p['v'][0]
-        if query.path[:7] == '/embed/':
-            return query.path.split('/')[2]
-        if query.path[:3] == '/v/':
-            return query.path.split('/')[2]
+        if query.path == '/watch': return parse_qs(query.query)['v'][0]
+        if query.path[:7] == '/embed/': return query.path.split('/')[2]
+        if query.path[:3] == '/v/': return query.path.split('/')[2]
     # fail?
     return None
-'''
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = 'somerandomstring'
 socketio = SocketIO(app)
 
-room_messages = {}
+# all links dictionary
+allLinks = dict()
+# all the messages
+room_messages = dict()
+# all the users (probably a session)
+# room member count
+room_members = dict()
 
 @app.route("/")
 def index():
-    return render_template('room.html')
+    return render_template('index.html')
 
-@app.route("/room/<string:value>")
-def room():
-    return render_template('room.html')
+@app.route('/create_room', methods=['POST'])
+def submit():
+    username = request.form.get('username')
+    link = request.form.get('link')
+    room = request.form.get('room')
+    allLinks[room] = extract_video_id(link)
+    room_members[room] = 1
+    # send json
+    return jsonify({'success': True, 'code': room})
 
-@app.route("/generate_room")
-def generate_room():
-    generated_string_room = str(uuid.uuid4())
-    return generated_string_room
+@app.route('/join_room', methods=['POST'])
+def join():
+    username = request.form.get('displayName')
+    room = request.form.get('room')
+    # send json
+    return jsonify({'success': True, 'code': room})
+
+@app.route("/room/<string:code>")
+def room(code):
+    if (allLinks.get(code) != None):
+        link = allLinks[code]
+        # render room.html
+        return render_template('room.html', room = code)
+    else:
+        # send error 
+        return "Room doesn't exist!"
 
 @socketio.on('join')
 def on_join(data):
     username = data['username']
     room = data['code']
-    link = data['link']
-    video_id = link.split('=')[1]
-    print(video_id)
     greeting = username + f' has entered the room {room}'
     join_room(room)
-    print('Joined room')
-    socketio.emit("allRooms", {'greet': greeting, 'link': video_id}, room = room)
+    members = room_members[room]
+    print('Join room')
+    greet = f'{username} just dropped by!'
+    print(allLinks[room])
+    socketio.emit("allRooms", {'greet': greet,'room': room, 'members': members, 'link': allLinks[room]}, room = room)
 
 @socketio.on('leave')
 def on_leave(data):
     username = data['username']
     room = data['code']
+    print(room)
     leave_room(room)
+    room_members[room] -= 1
     print('Left room')
     greet = f'{username} has left the room.'
-    socketio.emit("left" , greet , room = room)
-
+    socketio.emit("left" , {'greet': greet} , room = room)
 
 @socketio.on('message')
 def send_message(data):
     username = data['username']
     message = data['message']
     room = data['code']
+    print(message, room)
     socketio.emit("allmessages", {"username": username, "message": message}, room = room)
 
-'''
-@socketio.on('controls')
+@socketio.on('control_time')
+def control_time(data):
+    newtime = data['newtime']
+    room = data['code']
+    print(newtime)
+    socketio.emit("time", {"newtime": newtime}, room = room)
+
+@socketio.on('control_video')
 def control_video(data):
-    status = data['status']
-    time = data['time']
-    volume = data['volume']
-    mute = data['mute']
-    seekTo = data['seekTo']
-    socketio.emit('controllers', {'status': status, 'time': time, 'volume': volume, 'mute': mute}, room = room)
-'''
+    control = data['control']
+    room = data['code']
+    print(control)
+    socketio.emit('status', {"status": control}, room = room)
+
+@socketio.on('control_speed')
+def control_speed(data):
+    speed = data['speed']
+    room = data['code']
+    print(speed)
+    socketio.emit('speed', {"speed": speed}, room = room)
 
 if __name__ == '__main__':
     socketio.run(app)

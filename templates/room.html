@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <title>Sync | Watch videos, movies and listen to songs with your friends</title>
     <style>
-        #username, #roomCode , #link, #message
+        #username, #roomCode , #message, #displayName
         {
             background-position: 10px 12px;
             background-repeat: no-repeat;
@@ -80,25 +80,280 @@
         <source src="/static/notification.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="alert"></div>
-    <hr>
-    <div align='center' id="main">
-        <form id="form">
-            <h3>Create a room:</h3><br>
-            <input type="text" id="username" value="chetankar65" hidden><br>
-            <input type="text" id="link" placeholder="Youtube link to stream"><br>
-            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Create a room">
-        </form> 
-        <br><hr>
-        <form id="form2">
-            <h3>Join a room:</h3><br>
-            <input type="text" id="roomCode" placeholder="Room Code"><br>
-            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Join room">
-        </form>
-    </div>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="{{url_for('static', filename='video-controls.js')}}"></script>
-    <script>
-    </script>
-</body>
+    <div class='row'>
+        <div class="col-lg-8">
+            <h3>Room ID : {{room}} &nbsp; &nbsp; Members : <span id="members"></span></h3>
+            <div id="video-placeholder" style="width:100%;height:500px;"></div>
+            <div class="jumbotron" id="controls">
+                <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
+                <input type="range" id="progress-bar" value="0" style="width:100%;"><br>
+                <i id="play" class="material-icons">play_arrow</i>
+                <i id="pause" class="material-icons">pause</i>
+                <i idl="mute-toggle" class="material-icons">volume_up</i><br>
+                <div class="row">
+                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                        <p>Speed</p>
+                        <select id="speed">
+                            <option>0.25</option>
+                            <option>0.5</option>
+                            <option selected="selected">1</option>
+                            <option>1.5</option>
+                            <option>2</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                        <p>Quality</p>
+                        <select id="quality">
+                            <option>small</option>
+                            <option>medium</option>
+                            <option selected="selected">large</option>
+                            <option>hd720</option>
+                            <option>hd1080</option>
+                            <option>highres</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br><br>
+            <div class="col-lg-4">
+                <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
+                <h3>Chat :</h3><hr>
+                <div id="messages" style="height:400px;overflow:scroll;" align='left'>
+                </div>
+                <br>
+                <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
+                <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn">Send message</button>
+                <br>
+            </div>
+        </div>
+        <script>
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
+            var audio = document.getElementById("message_audio")
+            var code = "{{ room | safe }}"
+            /// Playing the audio
+            function playAudio() 
+            { 
+                audio.play(); 
+            } 
+            // Pausing the audio
+            function pauseAudio() 
+            { 
+                audio.pause(); 
+            } 
+            // Send message
+            socket.on('connect', () => 
+            {
+                socket.emit('join', {'code': code, 'username':'chetankar'})
+            })
+    
+            function send_message() 
+            {
+                var message = document.querySelector('#message').value
+                var username = 'chetankar65'
+                if (message.length == 0 && message.trim() == "")
+                {
+                    return false
+                } 
+                else 
+                {
+                    socket.emit('message', {'code': code, 'username': username, 'message': message})
+                    document.querySelector('#message').value = ''
+                    return false
+                }
+            }
+            // function redirect
+            function redirect() 
+            {
+                window.location.replace("/")
+            }
+            // exit the room
+            function exit() 
+            {
+                socket.emit('leave', {'code': code, 'username': 'chetankar65'})
+                setTimeout(redirect, 3000)
+            }
+            /// give alert if someone left
+            socket.on('left', function (json) 
+            {
+                swal(json.greet)
+                playAudio()
+            })
+            // Enter button
+            var input = document.getElementById('message')
+            input.addEventListener("keyup", function(event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    document.getElementById("send_btn").click();
+                }
+            });
+    
+            function scrollToBottom(id) 
+            {
+                var div = document.getElementById(id);
+                div.scrollTop = div.scrollHeight - div.clientHeight;
+            }
+    
+            socket.on('allmessages', function(json) 
+            {
+                document.querySelector('#messages').innerHTML += 
+                    `<div id="message_box">
+                        <b>${json.username}
+                        </b><br><br>
+                        ${json.message}
+                    </div><br>`
+    
+                scrollToBottom("messages") 
+                playAudio()
+                return false
+            })
+
+            var player, time_update_interval = 0
+            function onYouTubeIframeAPIReady(video) {
+                console.log(video)
+                player = new YT.Player('video-placeholder', {
+                    width: 600,
+                    height: 400,
+                    videoId: video,
+                    playerVars: {
+                        color: 'white',
+                        controls:0,
+                        autoplay:0,
+                        loop:0
+                    },
+                    events: {
+                        onReady: initialize
+                    }
+                });
+            }
+            // Initialise video 
+            function initialize()
+            {
+                // Update the controls on load
+                updateTimerDisplay();
+                updateProgressBar();
+                // Clear any old interval.
+                clearInterval(time_update_interval);
+                // Start interval to update elapsed time display and
+                // the elapsed part of the progress bar every second.
+                time_update_interval = setInterval(function () {
+                    updateTimerDisplay();
+                    updateProgressBar();
+                }, 1000);
+                // $('#volume-input').val(Math.round(player.getVolume()));
+            }
+            // This function is called by initialize()
+            function updateTimerDisplay()
+            {
+                // Update current time text display.
+                $('#current-time').text(formatTime(player.getCurrentTime()));
+                $('#duration').text(formatTime(player.getDuration()));
+                /// controllers
+            }
+            // This function is called by initialize()
+            function updateProgressBar()
+            {
+                // Update the value of our progress bar accordingly.
+                $('#progress-bar').val((player.getCurrentTime() / player.getDuration()) * 100);
+            }
+            // Progress bar
+            jQuery(document.body).on('mouseup touchend', '#progress-bar' ,function (event) 
+            {
+                // Calculate the new time for the video.
+                // new time in seconds = total duration in seconds * ( value of range input / 100 )
+                var newTime = player.getDuration() * (event.target.value / 100);
+                // Skip video to new time.
+                socket.emit('control_time', {'newtime': newTime, 'code': code})
+                //player.seekTo(newTime);
+            });
+            // play video
+            jQuery(document.body).on('click','#play' , function (event) 
+            {
+                var control = true
+                socket.emit('control_video', {'control': control, 'code': code})
+            });
+            // pause Video
+            jQuery(document.body).on('click',' #pause' , function (event) 
+            {
+                var control = false
+                socket.emit('control_video', {'control':  control, 'code': code})
+            });
+            // Sound volume
+            jQuery(document.body).on('click', '#mute-toggle' , function(event) 
+            {
+                var mute_toggle = $(this);
+                if(player.isMuted()){
+                    player.unMute();
+                    mute_toggle.text('volume_up');
+                }
+                else{
+                    player.mute();
+                    mute_toggle.text('volume_off');
+                }
+            });
+            // speed of the video
+            jQuery(document.body).on('change', '#speed' , function (event) 
+            {
+                socket.emit('control_speed', {'speed': speed, 'code': code})
+            });
+            // quality of the video
+            jQuery(document.body).on('change', '#quality' , function (event) 
+            {
+                player.setPlaybackQuality($(this).val());
+            });
+            // Time
+            function formatTime(time){
+                time = Math.round(time);
+    
+                var minutes = Math.floor(time / 60),
+                    seconds = time - minutes * 60;
+    
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+    
+                return minutes + ":" + seconds;
+            }
+            
+            // All rooms
+            socket.on('allRooms', function(json) 
+            {
+                swal(json.greet, { button: false })
+                document.getElementById('members').innerHTML = json.members
+                var video = json.link
+                playAudio()
+                onYouTubeIframeAPIReady(video)
+            })
+    
+            socket.on('time', function(json) 
+            {
+                player.seekTo(json.newtime, true)
+                return false
+            })
+    
+            socket.on('status', function(json)
+            {
+                if (json.status == true)
+                {
+                    player.playVideo()
+                }
+                else
+                {
+                    player.pauseVideo()
+                }
+            })
+            /*
+                Check frequently video state:
+    
+                -1 - unstarted
+                0 - ended
+                1 - playing
+                2 - paused
+                3 - buffering
+                5 - video cued
+            */
+            socket.on('speed', function(json)
+            {
+                player.setPlaybackRate(json.speed);
+            })
+        </script>
+    </body>
 </html>

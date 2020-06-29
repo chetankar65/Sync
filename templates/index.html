@@ -1,177 +1,144 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>Sync | Watch together</title>
+<head lang="en">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <title>Sync | Watch videos, movies and listen to songs with your friends</title>
     <style>
-      body {
-        font-family: Arial, Helvetica, sans-serif;
-      }
-      
-      * {
-        box-sizing: border-box;
-      }
-      /* style the container */
-      .container {
-        position: relative;
-        border-radius: 5px;
-        background-color: #f2f2f2;
-        padding: 20px 0 30px 0;
-      } 
-      /* style inputs and link buttons */
-      input, .btn {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        border-radius: 4px;
-        margin: 5px 0;
-        opacity: 0.85;
-        display: inline-block;
-        font-size: 17px;
-        line-height: 20px;
-        text-decoration: none; /* remove underline from anchors */
-      }
-      
-      input:hover,
-      .btn:hover {
-        opacity: 1;
-      }
-      
-      /* add appropriate colors to fb, twitter and google buttons */
-      .fb {
-        background-color: #3B5998;
-        color: white;
-      }
-      
-      .twitter {
-        background-color: #55ACEE;
-        color: white;
-      }
-      
-      .google {
-        background-color: #dd4b39;
-        color: white;
-      }
-      
-      /* style the submit button */
-      input[type=submit] {
-        background-color: #4CAF50;
-        color: white;
-        cursor: pointer;
-      }
-      
-      input[type=submit]:hover {
-        background-color: #45a049;
-      }
-      
-      /* Two-column layout */
-      .col {
-        float: left;
-        width: 50%;
-        margin: auto;
-        padding: 0 50px;
-        margin-top: 6px;
-      }
-      
-      /* Clear floats after the columns */
-      .row:after {
-        content: "";
-        display: table;
-        clear: both;
-      }
-      
-      /* vertical line */
-      .vl {
-        position: absolute;
-        left: 50%;
-        transform: translate(-50%);
-        border: 2px solid #ddd;
-        height: 175px;
-      }
-      
-      /* text inside the vertical line */
-      .vl-innertext {
-        position: absolute;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #f1f1f1;
-        border: 1px solid #ccc;
-        border-radius: 50%;
-        padding: 8px 10px;
-      }
-      
-      /* hide some text on medium and large screens */
-      .hide-md-lg {
-        display: none;
-      }
-      
-      /* bottom container */
-      .bottom-container {
-        text-align: center;
-        background-color: #666;
-        border-radius: 0px 0px 4px 4px;
-      }
-      
-      /* Responsive layout - when the screen is less than 650px wide, make the two columns stack on top of each other instead of next to each other */
-      @media screen and (max-width: 650px) {
-        .col {
-          width: 100%;
-          margin-top: 0;
+        #username, #roomCode , #message, #displayName, #youtube
+        {
+            background-position: 10px 12px;
+            background-repeat: no-repeat;
+            width: 50%;
+            font-size: 16px;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 12px;
         }
-        /* hide the vertical line */
-        .vl {
-          display: none;
+
+        .submit 
+        {
+            background-color: blue;
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            width: 50%;
         }
-        /* show the hidden text on small screens */
-        .hide-md-lg {
-          display: block;
-          text-align: center;
+
+        #message_box
+        {
+            background-color: cyan;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
         }
-      }
-      </style>
-  </head>
-  <body>
-    <div class="container">
-      <form action="/action_page.php">
-        <div class="row">
-          <h2 style="text-align:center">Login with Social Media or Manually</h2>
-          <div class="vl">
-            <span class="vl-innertext">or</span>
-          </div>
-    
-          <div class="col">
-            <a href="#" class="fb btn">
-              <i class="fa fa-facebook fa-fw"></i> Login with Facebook
-             </a>
-            <a href="#" class="twitter btn">
-              <i class="fa fa-twitter fa-fw"></i> Login with Twitter
-            </a>
-            <a href="#" class="google btn"><i class="fa fa-google fa-fw">
-              </i> Login with Google+
-            </a>
-          </div>
-    
-          <div class="col">
-            <div class="hide-md-lg">
-              <p>Or sign in manually:</p>
-            </div>
-    
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="submit" value="Login">
-          </div>
-          
-        </div>
-      </form>
+
+        #progress-bar{
+            position: relative;
+            width: 100%;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        #controls i {
+            color: #000;
+            font-size: 32px;
+            cursor: pointer;
+        }
+
+        #volume-input{
+            height: 32px;
+            width: 45px;
+        }
+
+        body
+        {
+            margin-top: 2%;
+        }
+
+        #messages 
+        {
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <audio id="message_audio">
+        <source src="/static/notification.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="alert"></div>
+    <hr>
+    <div align='center' id="main">
+        <form id="form">
+            <h3>Create a room:</h3><br>
+            <input type="text" id="youtube" placeholder="Youtube link" required><br>
+            <input type="text" id="username" placeholder="Display Name" required><br>
+            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Create a room">
+        </form> 
+        <br><hr>
+        <form id="form2">
+            <h3>Join a room:</h3><br>
+            <input type="text" id="displayName" placeholder="Display Name"><br>
+            <input type="text" id="roomCode" placeholder="Room Code"><br>
+            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Join room">
+        </form>
     </div>
-    
-    <div class="bottom-container">
-      <div class="row">
-        <div class="col">
-          <a href="#" style="color:white" class="btn">Sign up</a>
-        </div>
-        <div class="col">
-          <a href="#" style="color:white" class="btn">Forgot password?</a>
-        </div>
-      </div>
-    </div>    
-  </body>
+    <script>
+      function create_UUID()
+      {
+          var dt = new Date().getTime();
+          var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              var r = (dt + Math.random()*16)%16 | 0;
+              dt = Math.floor(dt/16);
+              return (c == 'x' ? r :(r&0x3|0x8)).toString(16);
+          });
+          return uuid;
+      }
+    //AJAX REQUEST
+    document.querySelector('#form').onsubmit = () => {
+        var username = document.querySelector('#username').value
+        var youtube = document.querySelector('#youtube').value
+        const request = new XMLHttpRequest();
+        request.open('POST', '/create_room');
+
+        // Callback function for when request completes
+        request.onload = () => {
+            // Extract JSON data from request
+            const data = JSON.parse(request.responseText);
+            // Update the result div
+            if (data.success) {
+                window.location.replace(`/room/${data.code}`)
+            }
+            else {
+                alert('User already exists!')
+            }
+        }
+
+        // Add data to send with request
+        const data = new FormData();
+        data.append('username', username);
+        data.append('link', youtube);
+        data.append('room', create_UUID())
+
+        // Send request
+        request.send(data);
+        return false;
+    }
+
+
+    </script>
+</body>
 </html>
