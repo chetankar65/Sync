@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Watch together here | Sync app</title>
 </head>
+
 <body>
     <div class='row'>
         <div class="col-lg-8">
@@ -44,14 +46,17 @@
         <br><br>
         <div class="col-lg-4">
             <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
-            <h3>Chat :</h3><hr>
+            <h3>Chat :</h3>
+            <hr>
             <div id="messages" style="height:400px;overflow:scroll;" align='left'>
             </div>
             <br>
             <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
-            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn" hidden>Send message</button>
+            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn"
+                hidden>Send message</button>
             <br>
         </div>
     </div>
 </body>
+
 </html>

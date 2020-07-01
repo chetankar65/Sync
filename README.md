@@ -7,4 +7,12 @@ Enjoy with your friends.
 
 <img src="/static/cover.png" alt="example">
 
-Uses Flask framework
+Uses Flask micro-framework
+
+<h1>Other features </h1>
+<ul>
+    <li>Other streaming platforms</li>
+    <li>Desktop files</li>
+    <li>Music</li>
+</ul>
+

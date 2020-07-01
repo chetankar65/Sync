@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head lang="en">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,12 +10,14 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="https://www.youtube.com/iframe_api"></script>
     <title>Sync | Watch videos, movies and listen to songs with your friends</title>
     <style>
-        #username, #roomCode , #message, #displayName
-        {
+        #username,
+        #roomCode,
+        #message,
+        #displayName {
             background-position: 10px 12px;
             background-repeat: no-repeat;
             width: 50%;
@@ -24,8 +27,7 @@
             margin-bottom: 12px;
         }
 
-        .submit 
-        {
+        .submit {
             background-color: blue;
             border: none;
             color: white;
@@ -38,15 +40,14 @@
             width: 50%;
         }
 
-        #message_box
-        {
+        #message_box {
             background-color: cyan;
             width: 100%;
             padding: 10px;
             border-radius: 10px;
         }
 
-        #progress-bar{
+        #progress-bar {
             position: relative;
             width: 100%;
             height: 20px;
@@ -59,22 +60,21 @@
             cursor: pointer;
         }
 
-        #volume-input{
+        #volume-input {
             height: 32px;
             width: 45px;
         }
 
-        body
-        {
+        body {
             margin-top: 2%;
         }
 
-        #messages 
-        {
+        #messages {
             bottom: 0;
         }
     </style>
 </head>
+
 <body>
     <audio id="message_audio">
         <source src="/static/notification.mp3" type="audio/mpeg">
@@ -82,7 +82,7 @@
 
     <div class='row'>
         <div class="col-lg-8">
-            <h3>Room ID : {{room}} &nbsp; &nbsp; Members : <span id="members"></span></h3>
+            <h3>Room ID : {{room}}</h3>
             <div id="video-placeholder" style="width:100%;height:500px;"></div>
             <div class="jumbotron" id="controls">
                 <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
@@ -116,244 +116,259 @@
             </div>
         </div>
         <br><br>
-            <div class="col-lg-4">
-                <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
-                <h3>Chat :</h3><hr>
-                <div id="messages" style="height:400px;overflow:scroll;" align='left'>
-                </div>
-                <br>
-                <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
-                <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn">Send message</button>
-                <br>
+        <div class="col-lg-4">
+            <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
+            <h3>Chat :</h3>
+            <hr>
+            <div id="messages" style="height:400px;overflow:scroll;" align='left'>
             </div>
+            <br>
+            <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
+            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()"
+                id="send_btn">Send message</button>
+            <br>
         </div>
-        <script>
-            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
-            var audio = document.getElementById("message_audio")
-            var code = "{{ room | safe }}"
-            /// Playing the audio
-            function playAudio() 
-            { 
-                audio.play(); 
-            } 
-            // Pausing the audio
-            function pauseAudio() 
-            { 
-                audio.pause(); 
-            } 
-            // Send message
-            socket.on('connect', () => 
-            {
-                socket.emit('join', {'code': code, 'username':'chetankar'})
-            })
-    
-            function send_message() 
-            {
-                var message = document.querySelector('#message').value
-                var username = 'chetankar65'
-                if (message.length == 0 && message.trim() == "")
-                {
-                    return false
-                } 
-                else 
-                {
-                    socket.emit('message', {'code': code, 'username': username, 'message': message})
-                    document.querySelector('#message').value = ''
-                    return false
-                }
+    </div>
+    <script>
+    var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
+    var audio = document.getElementById("message_audio")
+    var code = "{{ room | safe }}"
+    document.addEventListener('DOMContentLoaded', () => {
+        /// Playing the audio
+        function playAudio() 
+        {
+            audio.play();
+        }
+        // Pausing the audio
+        function pauseAudio() 
+        {
+            audio.pause();
+        }
+        // Load all the messages
+        function loadAllMessages(code)
+        {
+            socket.emit('get messages', {'code': code});
+        }
+        // Send message
+        socket.on('connect', () => 
+        {
+            socket.emit('join', {'code': code, 'username': 'chetankar'})
+            loadAllMessages(code)
+            return false;
+        })
+        /// give alert if someone left
+        socket.on('left', function (json) 
+        {
+            swal(json.greet)
+            playAudio()
+        })
+        // Enter button
+        var input = document.getElementById('message')
+        input.addEventListener("keyup", function (event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                document.getElementById("send_btn").click();
             }
-            // function redirect
-            function redirect() 
+        });
+        // Scroll to the bottom of the messages division
+        function scrollToBottom(id) 
+        {
+            var div = document.getElementById(id);
+            div.scrollTop = div.scrollHeight - div.clientHeight;
+        }
+        // get all the messages
+        socket.on('allmessages', function (json) 
+        {
+            var content = ''
+            for (var i = 0; i < json.messages.length; i++)
             {
-                window.location.replace("/")
+                content += 
+                `<div id="message_box">
+                    <b>${json.messages[i].username}
+                    </b><br><br>
+                    ${json.messages[i].message}
+                </div><br>
+                `
             }
-            // exit the room
-            function exit() 
-            {
-                socket.emit('leave', {'code': code, 'username': 'chetankar65'})
-                setTimeout(redirect, 3000)
-            }
-            /// give alert if someone left
-            socket.on('left', function (json) 
-            {
-                swal(json.greet)
-                playAudio()
-            })
-            // Enter button
-            var input = document.getElementById('message')
-            input.addEventListener("keyup", function(event) {
-                if (event.keyCode === 13) {
-                    event.preventDefault();
-                    document.getElementById("send_btn").click();
+            document.querySelector('#messages').innerHTML = content
+            scrollToBottom("messages")
+            playAudio()
+        })
+        // Initialise the variables
+        var player, time_update_interval = 0
+        // on youtube iframe api ready
+        function onYouTubeIframeAPIReady(video) 
+        {
+            console.log(video)
+            var video_id = video
+            player = new YT.Player('video-placeholder', {
+                width: 600,
+                height: 400,
+                videoId: video_id,
+                playerVars: {
+                    color: 'white',
+                    controls: 0,
+                    autoplay: 0,
+                    loop: 0
+                },
+                events: {
+                    onReady: initialize 
                 }
             });
-    
-            function scrollToBottom(id) 
-            {
-                var div = document.getElementById(id);
-                div.scrollTop = div.scrollHeight - div.clientHeight;
-            }
-    
-            socket.on('allmessages', function(json) 
-            {
-                document.querySelector('#messages').innerHTML += 
-                    `<div id="message_box">
-                        <b>${json.username}
-                        </b><br><br>
-                        ${json.message}
-                    </div><br>`
-    
-                scrollToBottom("messages") 
-                playAudio()
-                return false
-            })
-
-            var player, time_update_interval = 0
-            function onYouTubeIframeAPIReady(video) {
-                console.log(video)
-                player = new YT.Player('video-placeholder', {
-                    width: 600,
-                    height: 400,
-                    videoId: video,
-                    playerVars: {
-                        color: 'white',
-                        controls:0,
-                        autoplay:0,
-                        loop:0
-                    },
-                    events: {
-                        onReady: initialize
-                    }
-                });
-            }
-            // Initialise video 
-            function initialize()
-            {
-                // Update the controls on load
+        }
+        // Initialise video 
+        function initialize() 
+        {
+            // Update the controls on load
+            updateTimerDisplay();
+            updateProgressBar();
+            // Clear any old interval.
+            clearInterval(time_update_interval);
+            // Start interval to update elapsed time display and
+            // the elapsed part of the progress bar every second.
+            time_update_interval = setInterval(function () {
                 updateTimerDisplay();
                 updateProgressBar();
-                // Clear any old interval.
-                clearInterval(time_update_interval);
-                // Start interval to update elapsed time display and
-                // the elapsed part of the progress bar every second.
-                time_update_interval = setInterval(function () {
-                    updateTimerDisplay();
-                    updateProgressBar();
-                }, 1000);
-                // $('#volume-input').val(Math.round(player.getVolume()));
+            }, 1000);
+            // $('#volume-input').val(Math.round(player.getVolume()));
+        }
+        // This function is called by initialize()
+        function updateTimerDisplay() 
+        {
+            // Update current time text display.
+            $('#current-time').text(formatTime(player.getCurrentTime()));
+            $('#duration').text(formatTime(player.getDuration()));
+            /// controllers
+        }
+        // This function is called by initialize()
+        function updateProgressBar() 
+        {
+            // Update the value of our progress bar accordingly.
+            $('#progress-bar').val((player.getCurrentTime() / player.getDuration()) * 100);
+        }
+        // Progress bar
+        jQuery(document.body).on('mouseup touchend', '#progress-bar', function (event) 
+        {
+            // Calculate the new time for the video.
+            // new time in seconds = total duration in seconds * ( value of range input / 100 )
+            var newTime = player.getDuration() * (event.target.value / 100);
+            // Skip video to new time.
+            socket.emit('control_time', {'newtime': newTime, 'code': code})
+        });
+        // play video
+        jQuery(document.body).on('click', '#play', function (event) 
+        {
+            var control = true
+            socket.emit('control_video', {'control': control, 'code': code})
+        });
+        // pause Video
+        jQuery(document.body).on('click', ' #pause', function (event) 
+        {
+            var control = false
+            socket.emit('control_video', {'control': control, 'code': code})
+        });
+        // Sound volume
+        jQuery(document.body).on('click', '#mute-toggle', function (event) 
+        {
+            var mute_toggle = $(this);
+            if (player.isMuted()) {
+                player.unMute();
+                mute_toggle.text('volume_up');
             }
-            // This function is called by initialize()
-            function updateTimerDisplay()
-            {
-                // Update current time text display.
-                $('#current-time').text(formatTime(player.getCurrentTime()));
-                $('#duration').text(formatTime(player.getDuration()));
-                /// controllers
+            else {
+                player.mute();
+                mute_toggle.text('volume_off');
             }
-            // This function is called by initialize()
-            function updateProgressBar()
-            {
-                // Update the value of our progress bar accordingly.
-                $('#progress-bar').val((player.getCurrentTime() / player.getDuration()) * 100);
+        });
+        // speed of the video
+        jQuery(document.body).on('change', '#speed', function (event) 
+        {
+            socket.emit('control_speed', {'speed': speed, 'code': code})
+        });
+        // quality of the video
+        jQuery(document.body).on('change', '#quality', function (event) 
+        {
+            player.setPlaybackQuality($(this).val());
+        });
+        // Time
+        function formatTime(time) 
+        {
+            time = Math.round(time);
+
+            var minutes = Math.floor(time / 60),
+                seconds = time - minutes * 60;
+
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+
+            return minutes + ":" + seconds;
+        }
+        // All rooms
+        socket.on('allRooms', function (json) 
+        {
+            swal(json.greet, { button: false })
+            var video = json.link
+            playAudio()
+            onYouTubeIframeAPIReady(video)
+        })
+        // Get the time at which the video loads
+        socket.on('time', function (json) 
+        {
+            player.seekTo(json.newtime, true)
+        })
+        // Get the status of the video
+        socket.on('status', function (json) 
+        {
+            if (json.status == true) {
+                player.playVideo()
             }
-            // Progress bar
-            jQuery(document.body).on('mouseup touchend', '#progress-bar' ,function (event) 
-            {
-                // Calculate the new time for the video.
-                // new time in seconds = total duration in seconds * ( value of range input / 100 )
-                var newTime = player.getDuration() * (event.target.value / 100);
-                // Skip video to new time.
-                socket.emit('control_time', {'newtime': newTime, 'code': code})
-                //player.seekTo(newTime);
-            });
-            // play video
-            jQuery(document.body).on('click','#play' , function (event) 
-            {
-                var control = true
-                socket.emit('control_video', {'control': control, 'code': code})
-            });
-            // pause Video
-            jQuery(document.body).on('click',' #pause' , function (event) 
-            {
-                var control = false
-                socket.emit('control_video', {'control':  control, 'code': code})
-            });
-            // Sound volume
-            jQuery(document.body).on('click', '#mute-toggle' , function(event) 
-            {
-                var mute_toggle = $(this);
-                if(player.isMuted()){
-                    player.unMute();
-                    mute_toggle.text('volume_up');
-                }
-                else{
-                    player.mute();
-                    mute_toggle.text('volume_off');
-                }
-            });
-            // speed of the video
-            jQuery(document.body).on('change', '#speed' , function (event) 
-            {
-                socket.emit('control_speed', {'speed': speed, 'code': code})
-            });
-            // quality of the video
-            jQuery(document.body).on('change', '#quality' , function (event) 
-            {
-                player.setPlaybackQuality($(this).val());
-            });
-            // Time
-            function formatTime(time){
-                time = Math.round(time);
-    
-                var minutes = Math.floor(time / 60),
-                    seconds = time - minutes * 60;
-    
-                seconds = seconds < 10 ? '0' + seconds : seconds;
-    
-                return minutes + ":" + seconds;
+            else {
+                player.pauseVideo()
             }
-            
-            // All rooms
-            socket.on('allRooms', function(json) 
-            {
-                swal(json.greet, { button: false })
-                document.getElementById('members').innerHTML = json.members
-                var video = json.link
-                playAudio()
-                onYouTubeIframeAPIReady(video)
-            })
-    
-            socket.on('time', function(json) 
-            {
-                player.seekTo(json.newtime, true)
-                return false
-            })
-    
-            socket.on('status', function(json)
-            {
-                if (json.status == true)
-                {
-                    player.playVideo()
-                }
-                else
-                {
-                    player.pauseVideo()
-                }
-            })
-            /*
-                Check frequently video state:
-    
-                -1 - unstarted
-                0 - ended
-                1 - playing
-                2 - paused
-                3 - buffering
-                5 - video cued
-            */
-            socket.on('speed', function(json)
-            {
-                player.setPlaybackRate(json.speed);
-            })
-        </script>
-    </body>
+        })
+        /*
+            Check frequently video state:
+         
+            -1 - unstarted
+            0 - ended
+            1 - playing
+            2 - paused
+            3 - buffering
+            5 - video cued
+        */
+        // Set the playback speed of the video
+        socket.on('speed', function (json) 
+        {
+            player.setPlaybackRate(json.speed);
+        })
+    })
+
+    // send the message on click or on enter
+    function send_message() 
+    {
+        var message = document.querySelector('#message').value
+        var username = 'chetankar65'
+        if (message.length == 0 && message.trim() == "") {
+            return false
+        }
+        else 
+        {
+            socket.emit('message', {'code': code, 'username': username, 'message': message})
+            document.querySelector('#message').value = ''
+        }
+    }
+    // function redirect
+    function redirect() 
+    {
+        window.location.replace("/")
+    }
+    // exit the room
+    function exit() 
+    {
+        swal("Leaving...", { button: false })
+        socket.emit('leave', {'code': code, 'username': 'chetankar65'})
+        setTimeout(redirect, 3000)
+    }
+    </script>
+</body>
+
 </html>
