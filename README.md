@@ -9,8 +9,13 @@ Enjoy with your friends.
 
 Uses Flask micro-framework
 
-<h1>Other features </h1>
-<ul>
+<h1>Finished features: </h1>
+<ul style="list-style-type:disc">
+    <li>Youtube files</li>
+</ul>
+
+<h1>Other features to be worked on:</h1>
+<ul style="list-style-type:circle">
     <li>Other streaming platforms</li>
     <li>Desktop files</li>
     <li>Music</li>
