@@ -2,8 +2,17 @@ import os
 from flask import Flask, render_template, jsonify, request, session, redirect, after_this_request
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 import uuid
-import time
 from urllib.parse import urlparse, parse_qs
+import hashlib
+# Import all database dependencies
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
+import psycopg2
+# This is the fed in database URL
+DATABASE_URL = 'postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync'
+# Set up database
+engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
+db = scoped_session(sessionmaker(bind=engine))
 
 def extract_video_id(url):
     # Examples:
@@ -36,17 +45,34 @@ room_moderators = dict()
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+    if(session.get('user_id')):
+        return redirect('/dashboard')
+    else:
+        return render_template('index.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if(session.get('user_id')):
+        return render_template('dashboard.html')
+    else:
+        return redirect('/')
+
+@app.route('/register_page')
+def register_page():
+    if(session.get('user_id')):
+        return redirect('/dashboard')
+    else:
+        return render_template('register.html')
 
 @app.route('/create_room', methods=['POST'])
 def submit():
-    username = request.form.get('username')
+    # set admin everytime someone creates a room
     link = request.form.get('youtube')
     room = str(uuid.uuid4())
     allLinks[room] = extract_video_id(link)
     room_members[room] = 1
     room_messages[room] = [{'message':'Start your conversation here!', 'username':'SyncApp'}]
-    print(room_members[room], room_messages[room])
+    room_moderators[room] = session.get('user_id')
     # send json
     redirect_link = f'/room/{room}'
     # redirect to the redirect link
@@ -54,33 +80,63 @@ def submit():
 
 @app.route('/join_room', methods=['POST'])
 def join():
-    username = request.form.get('displayName')
     room = request.form.get('room')
     room_members[room] += 1
     # send json
     return jsonify({'success': True, 'code': room})
 
+@app.route('/register', methods=['POST'])
+def register():
+    email = request.form.get("email")
+    username = request.form.get("username")
+    password = request.form.get("password")
+    newpass = password + "abmcnk2o210u9win" #salting
+    # store salt in an environment variable as has secret
+    password_hash = hashlib.sha256(newpass.encode())
+    if db.execute("SELECT * FROM users WHERE username = :username",{"username":username}).rowcount == 0:
+        db.execute("INSERT INTO users (username, email, password) VALUES (:username, :email, :pass)",{"username": username, "email":email,"pass": password_hash.hexdigest()})
+        db.commit()
+        return jsonify({'success':True, 'msg':'Registered!'})
+    else:
+        return jsonify({'success':False, 'msg':'Email already exists!'})
+
+@app.route("/login", methods=['POST'])
+def login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    newpass = password + "abmcnk2o210u9win" #salting
+    password_hash = hashlib.sha256(newpass.encode())
+    if db.execute("SELECT * FROM users WHERE username = :username",{"username":username}).rowcount == 0:
+        return jsonify({'success':False, 'msg':"Account doesn't exist!"})
+    else:
+        rows = db.execute("SELECT user_id,username,password FROM users WHERE username = :username",{"username":username}).fetchone()
+        if (password_hash.hexdigest() == rows.password and username == rows.username):
+            session["user_id"] = rows.user_id
+            return jsonify({'success':True, 'msg':'Logged in!'})
+        else:
+            return jsonify({'success':False, 'msg':'Internal server error!'})
+
+@app.route("/logout")
+def logout():
+    session.pop('user_id', None)
+    return redirect('/')
+
 @app.route("/room/<string:code>")
 def room(code):
     if (allLinks.get(code) != None):
         link = allLinks[code]
-        # render room.html
-        return render_template('room.html', room = code)
+        control_bool = False
+        if (room_moderators[code] == session.get('user_id')):
+            control_bool = True
+        return render_template('room.html', room = code, control_bool = control_bool)
     else:
         # send error 
         return "Room doesn't exist!"
 
-@app.route('/login')
-def login():
-    pass
-
-@app.route('/register')
-def register():
-    pass
-
 @socketio.on('join')
 def on_join(data):
-    username = data['username']
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
     room = data['code']
     join_room(room)
     print('Join room')
@@ -89,7 +145,8 @@ def on_join(data):
 
 @socketio.on('leave')
 def on_leave(data):
-    username = data['username']
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
     room = data['code']
     print(room)
     leave_room(room)
@@ -105,7 +162,8 @@ def on_leave(data):
 
 @socketio.on('message')
 def send_message(data):
-    username = data['username']
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
     message = data['message']
     room = data['code']
     messages = room_messages[room]

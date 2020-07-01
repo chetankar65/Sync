@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <title>Sync | Watch videos, movies and listen to songs with your friends</title>
+    <style>
+        #username,
+        #roomCode,
+        #message,
+        #displayName,
+        #youtube {
+            background-position: 10px 12px;
+            background-repeat: no-repeat;
+            width: 50%;
+            font-size: 16px;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 12px;
+        }
+
+        .submit {
+            background-color: blue;
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            width: 50%;
+        }
+
+        #message_box {
+            background-color: cyan;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #progress-bar {
+            position: relative;
+            width: 100%;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        #controls i {
+            color: #000;
+            font-size: 32px;
+            cursor: pointer;
+        }
+
+        #volume-input {
+            height: 32px;
+            width: 45px;
+        }
+
+        #messages {
+            bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+        <div class="container"> <a class="navbar-brand" href="#">
+                <b>Sync</b>
+            </a> <button class="navbar-toggler navbar-toggler-right border-0" type="button" data-toggle="collapse"
+                data-target="#navbar17">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar17">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item"> <a class="nav-link" href="#">About</a> </li>
+                </ul>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"> <a class="nav-link" href="/logout">Logout</a> </li>
+                    <li class="nav-item"> <a class="nav-link" href="#">Github Repository</a> </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div id="alert"></div>
+    <hr>
+    <div align='center' id="main">
+        <form id="form" action="/create_room" method="POST">
+            <h3>Create a room:</h3><br>
+            <input type="text" name="youtube" id="youtube" placeholder="Youtube link" required><br>
+            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Create a room">
+        </form>
+        <br>
+        <hr>
+        <form id="form2">
+            <h3>Join a room:</h3><br>
+            <input type="text" id="roomCode" placeholder="Room Code"><br>
+            <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Join room">
+        </form>
+    </div>
+    <script>
+        document.querySelector('#form2').onsubmit = () => {
+            var code = document.querySelector('#roomCode').value
+            const request = new XMLHttpRequest();
+            request.open('POST', '/join_room');
+
+            // Callback function for when request completes
+            request.onload = () => {
+                // Extract JSON data from request
+                const data = JSON.parse(request.responseText);
+                // Update the result div
+                if (data.success) {
+                    window.location.replace(`/room/${data.code}`)
+                }
+                else {
+                    alert('User already exists!')
+                }
+            }
+
+            // Add data to send with request
+            const data = new FormData();
+            data.append('room', code);
+            // Send request
+            request.send(data);
+            return false;
+        }
+    </script>
+</body>
+
+</html>

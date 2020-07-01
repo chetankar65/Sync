@@ -65,10 +65,6 @@
             width: 45px;
         }
 
-        body {
-            margin-top: 2%;
-        }
-
         #messages {
             bottom: 0;
         }
@@ -79,40 +75,46 @@
     <audio id="message_audio">
         <source src="/static/notification.mp3" type="audio/mpeg">
     </audio>
-
     <div class='row'>
         <div class="col-lg-8">
             <h3>Room ID : {{room}}</h3>
             <div id="video-placeholder" style="width:100%;height:500px;"></div>
             <div class="jumbotron" id="controls">
-                <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
-                <input type="range" id="progress-bar" value="0" style="width:100%;"><br>
-                <i id="play" class="material-icons">play_arrow</i>
-                <i id="pause" class="material-icons">pause</i>
-                <i idl="mute-toggle" class="material-icons">volume_up</i><br>
-                <div class="row">
-                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
-                        <p>Speed</p>
-                        <select id="speed">
-                            <option>0.25</option>
-                            <option>0.5</option>
-                            <option selected="selected">1</option>
-                            <option>1.5</option>
-                            <option>2</option>
-                        </select>
+                {% if control_bool %}
+                    <p>Use these controls to sync with your partner.</p><br>
+                    <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
+                    <input type="range" id="progress-bar" value="0" style="width:100%;"><br>
+                    <i id="play" class="material-icons">play_arrow</i>
+                    <i id="pause" class="material-icons">pause</i>
+                    <i idl="mute-toggle" class="material-icons">volume_up</i><br>
+                    <div class="row">
+                        <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                            <p>Speed</p>
+                            <select id="speed">
+                                <option>0.25</option>
+                                <option>0.5</option>
+                                <option selected="selected">1</option>
+                                <option>1.5</option>
+                                <option>2</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                            <p>Quality</p>
+                            <select id="quality">
+                                <option>small</option>
+                                <option>medium</option>
+                                <option selected="selected">large</option>
+                                <option>hd720</option>
+                                <option>hd1080</option>
+                                <option>highres</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
-                        <p>Quality</p>
-                        <select id="quality">
-                            <option>small</option>
-                            <option>medium</option>
-                            <option selected="selected">large</option>
-                            <option>hd720</option>
-                            <option>hd1080</option>
-                            <option>highres</option>
-                        </select>
+                {% else %}
+                    <div class="row">
+                        <h3>Only the creator of the room can control the video!</h3>
                     </div>
-                </div>
+                {% endif %}
             </div>
         </div>
         <br><br>
@@ -152,7 +154,7 @@
         // Send message
         socket.on('connect', () => 
         {
-            socket.emit('join', {'code': code, 'username': 'chetankar'})
+            socket.emit('join', {'code': code})
             loadAllMessages(code)
             return false;
         })
@@ -346,13 +348,12 @@
     function send_message() 
     {
         var message = document.querySelector('#message').value
-        var username = 'chetankar65'
         if (message.length == 0 && message.trim() == "") {
             return false
         }
         else 
         {
-            socket.emit('message', {'code': code, 'username': username, 'message': message})
+            socket.emit('message', {'code': code, 'message': message})
             document.querySelector('#message').value = ''
         }
     }
@@ -365,7 +366,7 @@
     function exit() 
     {
         swal("Leaving...", { button: false })
-        socket.emit('leave', {'code': code, 'username': 'chetankar65'})
+        socket.emit('leave', {'code': code})
         setTimeout(redirect, 3000)
     }
     </script>
