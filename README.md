@@ -11,7 +11,7 @@ Uses Flask micro-framework
 
 <h1>Finished features: </h1>
 <ul style="list-style-type:disc">
-    <li>Youtube files</li>
+    <li>Youtube videos</li>
 </ul>
 
 <h1>Other features to be worked on:</h1>
