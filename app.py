@@ -9,7 +9,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
 # This is the fed in database URL
-DATABASE_URL = 'postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync'
+#DATABASE_URL = 'postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync'
+DATABASE_URL = 'postgresql+psycopg2://vecwhsempckuvz:2f5de9b95360e3172d8a0ca43e6b2edb2187c0b983dc5bd646d2c99929f6d8c3@ec2-54-75-244-161.eu-west-1.compute.amazonaws.com:5432/ddr39mq3m72lgh'
+
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))
@@ -39,9 +41,13 @@ allLinks = dict()
 room_messages = dict()
 # all the users (probably a session)
 # room member count
-room_members = dict()
+room_members_count = dict()
 # room moderators
 room_moderators = dict()
+# Room members limit (creator of room can set a limit to number of people in each room)
+room_members_limit = dict()
+# all the people in one room
+room_members = dict()
 
 @app.route("/")
 def index():
@@ -70,9 +76,10 @@ def submit():
     link = request.form.get('youtube')
     room = str(uuid.uuid4())
     allLinks[room] = extract_video_id(link)
-    room_members[room] = 1
+    room_members_count[room] = 1
     room_messages[room] = [{'message':'Start your conversation here!', 'username':'SyncApp'}]
     room_moderators[room] = session.get('user_id')
+    room_members[room] = []
     # send json
     redirect_link = f'/room/{room}'
     # redirect to the redirect link
@@ -81,7 +88,6 @@ def submit():
 @app.route('/join_room', methods=['POST'])
 def join():
     room = request.form.get('room')
-    room_members[room] += 1
     # send json
     return jsonify({'success': True, 'code': room})
 
@@ -123,12 +129,13 @@ def logout():
 
 @app.route("/room/<string:code>")
 def room(code):
+    room_members_count[code] += 1
     if (allLinks.get(code) != None):
         link = allLinks[code]
         control_bool = False
         if (room_moderators[code] == session.get('user_id')):
             control_bool = True
-        return render_template('room.html', room = code, control_bool = control_bool)
+        return render_template('room.html', room = code, control_bool = control_bool, link = link)
     else:
         # send error 
         return "Room doesn't exist!"
@@ -138,10 +145,11 @@ def on_join(data):
     rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
     username = rows.username
     room = data['code']
+    room_members[room].append(username)
     join_room(room)
     print('Join room')
     greet = f'{username} just dropped by!'
-    socketio.emit("allRooms", {'greet': greet,'room': room,'link': allLinks[room]}, room = room)
+    socketio.emit("allRooms", {'greet': greet,'room': room}, room = room)
 
 @socketio.on('leave')
 def on_leave(data):
@@ -150,13 +158,12 @@ def on_leave(data):
     room = data['code']
     print(room)
     leave_room(room)
-    room_members[room] -= 1
-    if (room_members[room] == 0):
-        room_members.pop(room)
+    room_members_count[room] -= 1
+    if (room_members_count[room] == 0):
+        room_members_count.pop(room)
         room_messages.pop(room)
         allLinks.pop(room)
-        #room_moderators.pop(room)
-    print('Left room')
+        room_moderators.pop(room)
     greet = f'{username} has left the room.'
     socketio.emit("left" , {'greet': greet} , room = room)
 
@@ -180,24 +187,50 @@ def get_all_messages(data):
 def control_time(data):
     newtime = data['newtime']
     room = data['code']
-    print(newtime)
     socketio.emit("time", {"newtime": newtime}, room = room)
+
+@socketio.on('get users')
+def getUsers(data):
+    room = data['code']
+    user_list = room_members[room]
+    socketio.emit('allUsers', {'users': user_list}, room = room)
 
 @socketio.on('control_video')
 def control_video(data):
     control = data['control']
     room = data['code']
-    print(control)
     socketio.emit('status', {"status": control}, room = room)
 
 @socketio.on('control_speed')
 def control_speed(data):
     speed = data['speed']
     room = data['code']
-    print(speed)
     socketio.emit('speed', {"speed": speed}, room = room)
 
-# we need to load all controls in the front end as well
+@socketio.on('rewind')
+def control_speed(data):
+    value = data['value']
+    room = data['code']
+    socketio.emit('jumpRewind', {"value": value}, room = room)
 
+@socketio.on('forward')
+def control_speed(data):
+    value = data['value']
+    room = data['code']
+    socketio.emit('jumpForward', {"value": value}, room = room)
+
+@socketio.on('restart')
+def restart(data):
+    value = data['value']
+    room = data['code']
+    socketio.emit('restarted', {}, room = room)
+
+@socketio.on('sync videos')
+def sync(data):
+    room = data['code']
+    time = data['time']
+    socketio.emit('synced', {"time": time}, room = room)
+    
+# we need to load all controls in the front end as well
 if __name__ == '__main__':
     socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')

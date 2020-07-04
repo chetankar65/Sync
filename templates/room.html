@@ -10,8 +10,9 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.plyr.io/3.6.2/plyr.polyfilled.js"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.2/plyr.css" />
     <title>Sync | Watch videos, movies and listen to songs with your friends</title>
     <style>
         #username,
@@ -47,6 +48,14 @@
             border-radius: 10px;
         }
 
+        #user_box { 
+            background-color: black;
+            color: white;
+            width: 80%;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
         #progress-bar {
             position: relative;
             width: 100%;
@@ -65,60 +74,78 @@
             width: 45px;
         }
 
+        body {
+            margin-top: 2%;
+        }
+
         #messages {
             bottom: 0;
+        }
+
+        .container
+        {
+            width: 100%;
+            height: 50%;
         }
     </style>
 </head>
 
-<body>
+<body onunload="exit()">
     <audio id="message_audio">
         <source src="/static/notification.mp3" type="audio/mpeg">
     </audio>
     <div class='row'>
-        <div class="col-lg-8">
-            <h3>Room ID : {{room}}</h3>
-            <div id="video-placeholder" style="width:100%;height:500px;"></div>
+        <div class="col-lg-8" align='center'>
+            <h3>Room ID : {{room}} &nbsp; &nbsp; <button class="btn btn-primary" onclick="copyToClipboard()">+ Invite</button></h3><br>
+            <div class="container">
+                <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="{{link}}"></div>
+            </div>
             <div class="jumbotron" id="controls">
                 {% if control_bool %}
-                    <p>Use these controls to sync with your partner.</p><br>
-                    <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
-                    <input type="range" id="progress-bar" value="0" style="width:100%;"><br>
-                    <i id="play" class="material-icons">play_arrow</i>
-                    <i id="pause" class="material-icons">pause</i>
-                    <i idl="mute-toggle" class="material-icons">volume_up</i><br>
-                    <div class="row">
-                        <div class="col-sm-6 col-lg-6 col-6 col-md-6">
-                            <p>Speed</p>
-                            <select id="speed">
-                                <option>0.25</option>
-                                <option>0.5</option>
-                                <option selected="selected">1</option>
-                                <option>1.5</option>
-                                <option>2</option>
-                            </select>
-                        </div>
-                        <div class="col-sm-6 col-lg-6 col-6 col-md-6">
-                            <p>Quality</p>
-                            <select id="quality">
-                                <option>small</option>
-                                <option>medium</option>
-                                <option selected="selected">large</option>
-                                <option>hd720</option>
-                                <option>hd1080</option>
-                                <option>highres</option>
-                            </select>
-                        </div>
+                <p>Use these controls to sync with your partner.</p><br>
+                <!--
+                <p><span id="current-time">0:00</span> / <span id="duration">0:00</span></p>
+                <input type="range" id="progress-bar" value="0" style="width:100%;"><br>
+                -->
+                <button class="btn btn-primary" id="togglePlay"><i class='fas fa-play'></i><i class='fas fa-pause'></i></button>
+                <button class="btn btn-danger" id="restart"><i class='fas fa-redo'></i></button>
+                <button class="btn btn-info" id="rewind"><i class='fas fa-step-backward'></i></button>
+                <button class="btn btn-info" id="forward"><i class='fas fa-step-forward'></i></button>
+                <button class="btn btn-success" id="mute"><i class='fas fa-volume-down'></i></button>
+                <button class="btn btn-warning" id="sync"><i class='fas fa-sync'></i></button>
+                <br><br>
+                <div class="row">
+                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                        <p>Speed</p>
+                        <select id="speed">
+                            <option>0.25</option>
+                            <option>0.5</option>
+                            <option selected="selected">1</option>
+                            <option>1.5</option>
+                            <option>2</option>
+                        </select>
                     </div>
+                    <div class="col-sm-6 col-lg-6 col-6 col-md-6">
+                        <p>Quality</p>
+                        <select id="quality">
+                            <option>small</option>
+                            <option>medium</option>
+                            <option selected="selected">large</option>
+                            <option>hd720</option>
+                            <option>hd1080</option>
+                            <option>highres</option>
+                        </select>
+                    </div>
+                </div>
                 {% else %}
-                    <div class="row">
-                        <h3>Only the creator of the room can control the video!</h3>
-                    </div>
+                <div class="row">
+                    <h3>Only the creator of the room can control the video!</h3>
+                </div>
                 {% endif %}
             </div>
         </div>
         <br><br>
-        <div class="col-lg-4">
+        <div class="col-lg-4" style="width:100%;">
             <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
             <h3>Chat :</h3>
             <hr>
@@ -126,210 +153,21 @@
             </div>
             <br>
             <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
-            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()"
-                id="send_btn">Send message</button>
-            <br>
+            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn">Send message</button>
+            <hr>
+            <h3 align='center'>Permissions</h3><br>
+            <div id="users" align='center' style="height:150px;overflow:scroll;">
+            </div>
+            <hr>
+            <ul>
+                <li>Powered by <a href="https://github.com/sampotts/plyr">Plyr.js</a> and <a href="https://developers.google.com/youtube/iframe_api_reference">Youtube API</a></li>
+                <li>Sourced at <a href="https://github.com/chetankar65/Sync">Github</a></li>
+            </ul>
         </div>
     </div>
-    <script>
-    var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
-    var audio = document.getElementById("message_audio")
-    var code = "{{ room | safe }}"
-    document.addEventListener('DOMContentLoaded', () => {
-        /// Playing the audio
-        function playAudio() 
-        {
-            audio.play();
-        }
-        // Pausing the audio
-        function pauseAudio() 
-        {
-            audio.pause();
-        }
-        // Load all the messages
-        function loadAllMessages(code)
-        {
-            socket.emit('get messages', {'code': code});
-        }
-        // Send message
-        socket.on('connect', () => 
-        {
-            socket.emit('join', {'code': code})
-            loadAllMessages(code)
-            return false;
-        })
-        /// give alert if someone left
-        socket.on('left', function (json) 
-        {
-            swal(json.greet)
-            playAudio()
-        })
-        // Enter button
-        var input = document.getElementById('message')
-        input.addEventListener("keyup", function (event) {
-            if (event.keyCode === 13) {
-                event.preventDefault();
-                document.getElementById("send_btn").click();
-            }
-        });
-        // Scroll to the bottom of the messages division
-        function scrollToBottom(id) 
-        {
-            var div = document.getElementById(id);
-            div.scrollTop = div.scrollHeight - div.clientHeight;
-        }
-        // get all the messages
-        socket.on('allmessages', function (json) 
-        {
-            var content = ''
-            for (var i = 0; i < json.messages.length; i++)
-            {
-                content += 
-                `<div id="message_box">
-                    <b>${json.messages[i].username}
-                    </b><br><br>
-                    ${json.messages[i].message}
-                </div><br>
-                `
-            }
-            document.querySelector('#messages').innerHTML = content
-            scrollToBottom("messages")
-            playAudio()
-        })
-        // Initialise the variables
-        var player, time_update_interval = 0
-        // on youtube iframe api ready
-        function onYouTubeIframeAPIReady(video) 
-        {
-            console.log(video)
-            var video_id = video
-            player = new YT.Player('video-placeholder', {
-                width: 600,
-                height: 400,
-                videoId: video_id,
-                playerVars: {
-                    color: 'white',
-                    controls: 0,
-                    autoplay: 0,
-                    loop: 0
-                },
-                events: {
-                    onReady: initialize 
-                }
-            });
-        }
-        // Initialise video 
-        function initialize() 
-        {
-            // Update the controls on load
-            updateTimerDisplay();
-            updateProgressBar();
-            // Clear any old interval.
-            clearInterval(time_update_interval);
-            // Start interval to update elapsed time display and
-            // the elapsed part of the progress bar every second.
-            time_update_interval = setInterval(function () {
-                updateTimerDisplay();
-                updateProgressBar();
-            }, 1000);
-            // $('#volume-input').val(Math.round(player.getVolume()));
-        }
-        // This function is called by initialize()
-        function updateTimerDisplay() 
-        {
-            // Update current time text display.
-            $('#current-time').text(formatTime(player.getCurrentTime()));
-            $('#duration').text(formatTime(player.getDuration()));
-            /// controllers
-        }
-        // This function is called by initialize()
-        function updateProgressBar() 
-        {
-            // Update the value of our progress bar accordingly.
-            $('#progress-bar').val((player.getCurrentTime() / player.getDuration()) * 100);
-        }
-        // Progress bar
-        jQuery(document.body).on('mouseup touchend', '#progress-bar', function (event) 
-        {
-            // Calculate the new time for the video.
-            // new time in seconds = total duration in seconds * ( value of range input / 100 )
-            var newTime = player.getDuration() * (event.target.value / 100);
-            // Skip video to new time.
-            socket.emit('control_time', {'newtime': newTime, 'code': code})
-        });
-        // play video
-        jQuery(document.body).on('click', '#play', function (event) 
-        {
-            var control = true
-            socket.emit('control_video', {'control': control, 'code': code})
-        });
-        // pause Video
-        jQuery(document.body).on('click', ' #pause', function (event) 
-        {
-            var control = false
-            socket.emit('control_video', {'control': control, 'code': code})
-        });
-        // Sound volume
-        jQuery(document.body).on('click', '#mute-toggle', function (event) 
-        {
-            var mute_toggle = $(this);
-            if (player.isMuted()) {
-                player.unMute();
-                mute_toggle.text('volume_up');
-            }
-            else {
-                player.mute();
-                mute_toggle.text('volume_off');
-            }
-        });
-        // speed of the video
-        jQuery(document.body).on('change', '#speed', function (event) 
-        {
-            socket.emit('control_speed', {'speed': speed, 'code': code})
-        });
-        // quality of the video
-        jQuery(document.body).on('change', '#quality', function (event) 
-        {
-            player.setPlaybackQuality($(this).val());
-        });
-        // Time
-        function formatTime(time) 
-        {
-            time = Math.round(time);
-
-            var minutes = Math.floor(time / 60),
-                seconds = time - minutes * 60;
-
-            seconds = seconds < 10 ? '0' + seconds : seconds;
-
-            return minutes + ":" + seconds;
-        }
-        // All rooms
-        socket.on('allRooms', function (json) 
-        {
-            swal(json.greet, { button: false })
-            var video = json.link
-            playAudio()
-            onYouTubeIframeAPIReady(video)
-        })
-        // Get the time at which the video loads
-        socket.on('time', function (json) 
-        {
-            player.seekTo(json.newtime, true)
-        })
-        // Get the status of the video
-        socket.on('status', function (json) 
-        {
-            if (json.status == true) {
-                player.playVideo()
-            }
-            else {
-                player.pauseVideo()
-            }
-        })
+    <script type="text/javascript">
         /*
             Check frequently video state:
-         
             -1 - unstarted
             0 - ended
             1 - playing
@@ -337,38 +175,239 @@
             3 - buffering
             5 - video cued
         */
-        // Set the playback speed of the video
-        socket.on('speed', function (json) 
-        {
-            player.setPlaybackRate(json.speed);
-        })
-    })
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
+        var audio = document.getElementById("message_audio")
+        var code = "{{ room | safe }}"
 
-    // send the message on click or on enter
-    function send_message() 
-    {
-        var message = document.querySelector('#message').value
-        if (message.length == 0 && message.trim() == "") {
-            return false
+        function copyToClipboard() {
+            swal('Copy the link: ' + window.location.href)
         }
-        else 
-        {
-            socket.emit('message', {'code': code, 'message': message})
-            document.querySelector('#message').value = ''
+
+        document.addEventListener('DOMContentLoaded', () => {
+            /// Playing the audio
+            function playAudio() {
+                audio.play();
+            }
+            // Pausing the audio
+            function pauseAudio() {
+                audio.pause();
+            }
+            // Load all the users
+            function loadAllUsers(code) {
+                socket.emit('get users', { 'code': code });
+            }
+            // Load all the messages
+            function loadAllMessages(code) {
+                socket.emit('get messages', { 'code': code });
+            }
+            // Send message
+            socket.on('connect', () => {
+                socket.emit('join', { 'code': code })
+                loadAllMessages(code)
+                loadAllUsers(code)
+                return false;
+            })
+            /// give alert if someone left
+            socket.on('left', function (json) {
+                swal(json.greet, { button: false })
+                playAudio()
+            })
+            /// all the users
+            socket.on('allUsers', function (json) {
+                var content = ''
+                for (var i = 0; i < json.users.length; i++) 
+                {
+                    content +=
+                    `<div id="user_box">
+                        ${json.users[i]}
+                    </div><br>
+                    `
+                }
+                document.querySelector('#users').innerHTML = content
+            })
+            // Enter button
+            var input = document.getElementById('message')
+            input.addEventListener("keyup", function (event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    document.getElementById("send_btn").click();
+                }
+            });
+            // Scroll to the bottom of the messages division
+            function scrollToBottom(id) {
+                var div = document.getElementById(id);
+                div.scrollTop = div.scrollHeight - div.clientHeight;
+            }
+            // get all the messages
+            socket.on('allmessages', function (json) {
+                var content = ''
+                for (var i = 0; i < json.messages.length; i++) 
+                {
+                    content +=
+                    `<div id="message_box">
+                    <b>${json.messages[i].username}
+                    </b><br><br>
+                    ${json.messages[i].message}
+                    </div><br>
+                    `
+                }
+                document.querySelector('#messages').innerHTML = content
+                scrollToBottom("messages")
+                playAudio()
+            })
+            // Initialise video
+            const player = new Plyr('#player', {'controls': 0});
+            // Mute Video
+            function muteVideo() {
+                if (player.muted)
+                {
+                    player.muted = false
+                    document.getElementById('mute').innerHTML = `<i class='fas fa-volume-down'></i>`
+                }
+                else 
+                {
+                    player.muted = true
+                    document.getElementById('mute').innerHTML = `<i class='fas fa-volume-mute'></i>`
+                }
+            }
+            // Onlick mute
+            jQuery(document.body).on('click', '#mute', function (event) {
+                muteVideo()
+            });
+            // Initialise
+            function initialize() {
+                // Update the controls on load
+                updateTimerDisplay();
+                updateProgressBar();
+                // Clear any old interval.
+                clearInterval(time_update_interval);
+                // Start interval to update elapsed time display and
+                // the elapsed part of the progress bar every second.
+                time_update_interval = setInterval(function () {
+                    updateTimerDisplay();
+                    updateProgressBar();
+                }, 1000);
+            }
+            // This function is called by initialize()
+            function updateTimerDisplay() {
+                // Update current time text display.
+                $('#current-time').text(formatTime(player.currentTime));
+                $('#duration').text(formatTime(player.duration));
+                /// controllers
+            }
+            // This function is called by initialize()
+            function updateProgressBar() {
+                // Update the value of our progress bar accordingly.
+                $('#progress-bar').val((player.currentTime / player.duration) * 100);
+            }
+            // Progress bar
+            jQuery(document.body).on('mouseup touchend', '#progress-bar', function (event) {
+                // Calculate the new time for the video.
+                // new time in seconds = total duration in seconds * ( value of range input / 100 )
+                var newTime = player.duration * (event.target.value / 100);
+                // Skip video to new time.
+                socket.emit('control_time', {'newtime': newTime, 'code': code})
+            });
+            // toggle video state
+            jQuery(document.body).on('click', '#togglePlay', function (event) {
+                var control = true
+                socket.emit('control_video', {'control': control, 'code': code})
+            });
+            // speed of the video
+            jQuery(document.body).on('change', '#speed', function (event) {
+                var speed = $(this).val();
+                socket.emit('control_speed', {'speed': speed, 'code': code})
+            });
+            // Rewind
+            jQuery(document.body).on('click', '#rewind', function (event) {
+                var value = $(this).val();
+                socket.emit('rewind', {'value': value, 'code': code})
+            });
+            // Forward
+            jQuery(document.body).on('click', '#forward', function (event) {
+                var value = $(this).val();
+                socket.emit('forward', {'value': value, 'code': code})
+            });
+            // quality of the video
+            jQuery(document.body).on('change', '#quality', function (event) 
+            {
+                player.quality = $(this).val()
+            });
+            // sync
+            function sync() {
+                var time = player.currentTime;
+                socket.emit('sync videos', {'code': code, 'time': time})
+            }
+            // Syncing with partner
+            jQuery(document.body).on('click', '#sync', function (event) {
+                sync()
+            });
+            // Time
+            function formatTime(time) {
+                time = Math.round(time);
+
+                var minutes = Math.floor(time / 60),
+                    seconds = time - minutes * 60;
+
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                return minutes + ":" + seconds;
+            }
+            // All rooms
+            socket.on('allRooms', function (json) {
+                swal(json.greet, { button: false })
+                var video = json.link
+                playAudio()
+            })
+            // Set the playback speed of the video
+            socket.on('speed', function (json) {
+                player.speed = json.speed
+            })
+            // Jump Forwarded
+            socket.on('jumpForward', function (json) {
+                player.forward(json.value);
+            })
+            // Jump Rewinded
+            socket.on('jumpRewind', function (json) {
+                player.rewind(json.value);
+            })
+            // Get the status of the video
+            socket.on('status', function (json) {
+                player.togglePlay()
+            })
+            // Restart the video
+            jQuery(document.body).on('click', '#restart', function (event) {
+                socket.emit('restart', {'value': true, 'code': code})
+            });
+            // synced
+            socket.on('synced', function (json) {
+                player.currentTime = json.time
+            })
+            // started
+            socket.on('restarted', function (json) {
+                player.restart()
+            })
+        })
+        // send the message on click or on enter
+        function send_message() {
+            var message = document.querySelector('#message').value
+            if (message.length == 0 && message.trim() == "") {
+                return false
+            }
+            else {
+                socket.emit('message', { 'code': code, 'message': message })
+                document.querySelector('#message').value = ''
+            }
         }
-    }
-    // function redirect
-    function redirect() 
-    {
-        window.location.replace("/")
-    }
-    // exit the room
-    function exit() 
-    {
-        swal("Leaving...", { button: false })
-        socket.emit('leave', {'code': code})
-        setTimeout(redirect, 3000)
-    }
+        // function redirect
+        function redirect() {
+            window.location.replace("/")
+        }
+        // exit the room
+        function exit() {
+            swal("Leaving...", { button: false })
+            socket.emit('leave', { 'code': code })
+            setTimeout(redirect, 3000)
+        }
     </script>
 </body>
 
