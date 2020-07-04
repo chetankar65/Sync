@@ -236,7 +236,7 @@ def sync(data):
 
 @app.route('/.well-known/acme-challenge/<string:id>')
 def stringId(id):
-    return id + '.' + 'AiiWyqIeSE3otz65khF0gVwOgOOtcRHRhTWxw0BiPfc.r8GldoFZZ6FnBg4tKfBTPTzLKS3ZLb3jw45Q6vARyEM'
+    return 'v4XocrNXjN3K_QIziZz1pCDk3ismj0NoXi77-OO2K9U.r8GldoFZZ6FnBg4tKfBTPTzLKS3ZLb3jw45Q6vARyEM'
     
 # we need to load all controls in the front end as well
 if __name__ == '__main__':
