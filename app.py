@@ -127,16 +127,19 @@ def logout():
 
 @app.route("/room/<string:code>")
 def room(code):
-    room_members_count[code] += 1
-    if (allLinks.get(code) != None):
-        link = allLinks[code]
-        control_bool = False
-        if (room_moderators[code] == session.get('user_id')):
-            control_bool = True
-        return render_template('room.html', room = code, control_bool = control_bool, link = link)
+    if(session.get('user_id')):
+        room_members_count[code] += 1
+        if (allLinks.get(code) != None):
+            link = allLinks[code]
+            control_bool = False
+            if (room_moderators[code] == session.get('user_id')):
+                control_bool = True
+            return render_template('room.html', room = code, control_bool = control_bool, link = link)
+        else:
+            # send error 
+            return "Room doesn't exist!"
     else:
-        # send error 
-        return "Room doesn't exist!"
+        return redirect('/')
 
 @socketio.on('join')
 def on_join(data):
