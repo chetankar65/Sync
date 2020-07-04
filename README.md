@@ -14,11 +14,11 @@ Uses Flask micro-framework.
     <li>Youtube videos</li>
 </ul>
 
-<h1></h1>
+<h1>Immediate features to be worked on:</h1>
 - Make a progress bar to seek ahead to different intervals of the video.
 - Voice chat (optional / research)
 
-<h1>Other features to be worked on:</h1>
+<h1>Other features to be worked on in the future:</h1>
 <ul style="list-style-type:circle">
     <li>Other streaming platforms</li>
     <li>Desktop files</li>
