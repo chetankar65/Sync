@@ -12,6 +12,7 @@ sqlalchemy = "*"
 psycopg2 = "*"
 urllib3 = "*"
 gevent-websocket = "*"
+flask-socketio = "*"
 
 [requires]
 python_version = "3.7"
