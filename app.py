@@ -120,7 +120,7 @@ def login():
             session["user_id"] = rows.user_id
             return jsonify({'success':True, 'msg':'Logged in!'})
         else:
-            return jsonify({'success':False, 'msg':'Internal server error!'})
+            return jsonify({'success':False, 'msg':'Wrong password!'})
 
 @app.route("/logout")
 def logout():
