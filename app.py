@@ -158,12 +158,14 @@ def on_leave(data):
     room = data['code']
     print(room)
     leave_room(room)
+    room_members[room].remove(username)
     room_members_count[room] -= 1
     if (room_members_count[room] == 0):
         room_members_count.pop(room)
         room_messages.pop(room)
         allLinks.pop(room)
         room_moderators.pop(room)
+        room_members.pop(room)
     greet = f'{username} has left the room.'
     socketio.emit("left" , {'greet': greet} , room = room)
 
