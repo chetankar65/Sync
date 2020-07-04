@@ -3,4 +3,4 @@ Flask-Session
 psycopg2-binary
 SQLAlchemy
 urllib3
-gevent==1.4.0
+gevent-websocket
