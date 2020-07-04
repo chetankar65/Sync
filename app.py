@@ -233,6 +233,10 @@ def sync(data):
     room = data['code']
     time = data['time']
     socketio.emit('synced', {"time": time}, room = room)
+
+@app.route('/.well-known/acme-challenge/<string:id>')
+def stringId(id):
+    return id + '.' + 'AiiWyqIeSE3otz65khF0gVwOgOOtcRHRhTWxw0BiPfc.r8GldoFZZ6FnBg4tKfBTPTzLKS3ZLb3jw45Q6vARyEM'
     
 # we need to load all controls in the front end as well
 if __name__ == '__main__':
