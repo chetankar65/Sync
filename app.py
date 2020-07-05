@@ -8,8 +8,7 @@ import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
-#DATABASE_URL = os.getenv("DATABASE_URL")
-DATABASE_URL = 'postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync'
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
@@ -31,9 +30,9 @@ def extract_video_id(url):
     return None
 
 app = Flask(__name__)
-#app.config["SECRET_KEY"] = os.getenv('sync')
+app.config["SECRET_KEY"] = os.getenv('sync')
 
-app.config["SECRET_KEY"] = 'snksnajidbwefpwibcnskascsnadsnjklas'
+#app.config["SECRET_KEY"] = 'snksnajidbwefpwibcnskascsnadsnjklas'
 socketio = SocketIO(app)
 
 # all links dictionary
