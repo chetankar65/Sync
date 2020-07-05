@@ -178,6 +178,8 @@
         var audio = document.getElementById("message_audio")
         var code = "{{ room | safe }}"
 
+        var controls = "{{control_bool | safe}}"
+
         function copyToClipboard() {
             swal('Copy the link: ' + window.location.href)
         }
@@ -297,7 +299,10 @@
                 document.getElementById('duration').innerHTML = `${player.duration}`.toHHMMSS();
             }
             // Update the progress bar every one second
-            setInterval(updateProgressBar, 1000)
+            if (controls == "True")
+            {
+                setInterval(updateProgressBar, 1000)
+            }
             // sync
             function sync(time) {
                 socket.emit('sync videos', {'code': code, 'time': time})
