@@ -8,7 +8,8 @@ import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
-DATABASE_URL = os.getenv("DATABASE_URL")
+#DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = 'postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync'
 
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
@@ -30,7 +31,9 @@ def extract_video_id(url):
     return None
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv('sync')
+#app.config["SECRET_KEY"] = os.getenv('sync')
+
+app.config["SECRET_KEY"] = 'snksnajidbwefpwibcnskascsnadsnjklas'
 socketio = SocketIO(app)
 
 # all links dictionary
@@ -128,8 +131,8 @@ def logout():
 @app.route("/room/<string:code>")
 def room(code):
     if(session.get('user_id')):
-        room_members_count[code] += 1
         if (allLinks.get(code) != None):
+            room_members_count[code] += 1
             link = allLinks[code]
             control_bool = False
             if (room_moderators[code] == session.get('user_id')):
@@ -137,7 +140,7 @@ def room(code):
             return render_template('room.html', room = code, control_bool = control_bool, link = link)
         else:
             # send error 
-            return "Room doesn't exist!"
+            return render_template('roomerror.html')
     else:
         return redirect('/')
 
@@ -234,10 +237,17 @@ def sync(data):
     time = data['time']
     socketio.emit('synced', {"time": time}, room = room)
 
-@app.route('/.well-known/acme-challenge/<string:id>')
-def stringId(id):
-    return 'v4XocrNXjN3K_QIziZz1pCDk3ismj0NoXi77-OO2K9U.r8GldoFZZ6FnBg4tKfBTPTzLKS3ZLb3jw45Q6vARyEM'
-    
+@socketio.on('sync progress')
+def syncProgress(data):
+    room = data['code']
+    jump = data['jump']
+    socketio.emit('progress', {"jump": jump}, room = room)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
+
 # we need to load all controls in the front end as well
 if __name__ == '__main__':
     socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')

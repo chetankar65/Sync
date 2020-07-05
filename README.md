@@ -15,7 +15,7 @@ Uses Flask micro-framework.
 </ul>
 
 <h1>Immediate features to be worked on:</h1>
-- Make a progress bar to seek ahead to different intervals of the video.
+- Customise the progress bar with CSS.
 - Voice chat (optional / research)
 
 <h1>Other features to be worked on in the future:</h1>
