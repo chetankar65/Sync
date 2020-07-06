@@ -15,7 +15,8 @@ Uses Flask micro-framework.
 </ul>
 
 <h1>Immediate features to be worked on:</h1>
-- Customise the progress bar with CSS.
+- Permissions settings
+- Mute, fullscreen etc
 - Voice chat (optional / research)
 
 <h1>Other features to be worked on in the future:</h1>

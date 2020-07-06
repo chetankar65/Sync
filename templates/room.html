@@ -48,14 +48,6 @@
             border-radius: 10px;
         }
 
-        #user_box { 
-            background-color: black;
-            color: white;
-            width: 80%;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
         #progress-bar {
             position: relative;
             width: 100%;
@@ -87,6 +79,30 @@
             width: 100%;
             height: 50%;
         }
+
+        #creator {
+            background-color: green;
+            width: 150px;
+            padding:20px;
+            height: 100px;
+            color:white;
+        }
+
+        #admin {
+            background-color: blue;
+            width: 150px;
+            padding:20px;
+            height: 100px;
+            color:white;
+        }
+
+        #standby {
+            background-color: red;
+            width: 150px;
+            padding:20px;
+            height: 100px;
+            color:white;
+        }
     </style>
 </head>
 
@@ -101,6 +117,11 @@
                 <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="{{link}}"></div>
             </div>
             <div class="jumbotron" id="controls">
+                <button class="btn btn-success" id="mute"><i class='fas fa-volume-down'></i></button>
+                <button class="btn btn-info" id="fullscreen"><i class='fas fa-expand'></i></button>
+                <button class="btn btn-secondary" id="mic" onclick="swal('The voicechat feature is not complete yet!')"><i class='fas fa-microphone'></i></button>
+                <button class="btn btn-primary" id="notification"><i class='fas fa-bell'></i></button>
+                <br><br>
                 {% if control_bool %}
                 <p>Use these controls to sync with your partner.</p><br>
                 <span id="time">00:00</span> / <span id="duration">00:00</span>
@@ -109,9 +130,15 @@
                 <button class="btn btn-danger" id="restart"><i class='fas fa-redo'></i></button>
                 <button class="btn btn-info" id="rewind"><i class='fas fa-step-backward'></i></button>
                 <button class="btn btn-info" id="forward"><i class='fas fa-step-forward'></i></button>
-                <button class="btn btn-success" id="mute"><i class='fas fa-volume-down'></i></button>
-                <button class="btn btn-warning" id="sync"><i class='fas fa-sync'></i></button>
-                <button class="btn btn-info" id="fullscreen"><i class='fas fa-expand'></i></button>
+                <button class="btn btn-warning" id="sync"><i class='fas fa-sync'></i></button><br><br>
+                <!--
+                <form class="form-inline justify-content-center">
+                    <div class="form-group mx-sm-3 mb-2">
+                    <input type="text" class="form-control" id="youtube" placeholder="Youtube URL">
+                    </div>
+                    <button type="submit" class="btn btn-primary mb-2">Change URL</button>
+                </form>
+                -->
                 <br><br>
                 <div class="row">
                     <div class="col-sm-6 col-lg-6 col-6 col-md-6">
@@ -145,7 +172,11 @@
         </div>
         <br><br>
         <div class="col-lg-4" style="width:100%;">
-            <button class='btn btn-danger' onclick="exit()">Exit room</button><br><br>
+            <button class='btn btn-danger' onclick="exit()">Exit room</button>
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">
+                What the colors mean?
+            </button>
+            <br><br>
             <h3>Chat :</h3>
             <hr>
             <div id="messages" style="height:400px;overflow:scroll;" align='left'>
@@ -164,6 +195,32 @@
             </ul>
         </div>
     </div>
+    <!-- The Modal -->
+    <div class="modal" id="myModal">
+        <div class="modal-dialog">
+        <div class="modal-content">
+    
+            <!-- Modal Header -->
+            <div class="modal-header">
+            <h4 class="modal-title">Colors</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+    
+            <!-- Modal body -->
+            <div class="modal-body" align='center'>
+            <div id="creator"><p>Group creator</p></div>
+            <div id="admin"><p>Group moderator</p></div>
+            <div id="standby"><p>Standby</p></div> 
+            </div>
+    
+            <!-- Modal footer -->
+            <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+    
+        </div>
+        </div>
+    </div>
     <script type="text/javascript">
         /*
             Check frequently video state:
@@ -177,15 +234,16 @@
         var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
         var audio = document.getElementById("message_audio")
         var code = "{{ room | safe }}"
-
         var controls = "{{control_bool | safe}}"
 
         function copyToClipboard() {
             swal('Copy the link: ' + window.location.href)
         }
 
+        // keyValue
         document.addEventListener('DOMContentLoaded', () => {
             /// Playing the audio
+            var notificationSound = true
             function playAudio() {
                 audio.play();
             }
@@ -208,21 +266,77 @@
                 loadAllUsers(code)
                 return false;
             })
+            // Notification controls
+            jQuery(document.body).on('click', '#notification', function (event) {
+                if (notificationSound)
+                {
+                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell-slash'></i>"
+                    document.getElementById('message_audio').src = ""
+                    notificationSound = false
+                }
+                else
+                {
+                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell'></i>"
+                    document.getElementById('message_audio').src = "/static/notification.mp3"
+                    notificationSound = true
+                }
+            });
             /// give alert if someone left
             socket.on('left', function (json) {
                 swal(json.greet, { button: false })
                 playAudio()
             })
+            // XHR requests to set permissions
+            function set_permission(value) {
+                /*
+                // Initialize new request
+                const request = new XMLHttpRequest();
+                request.open('POST', '/set_permission');
+
+                // Callback function for when request completes
+                request.onload = () => {
+
+                    // Extract JSON data from request
+                    const data = JSON.parse(request.responseText);
+
+                    // Update the result div
+                    if (data.success) {
+                        location.reload()
+                    }
+                    else {
+                        //document.querySelector('#msg').innerHTML = data.msg;
+                        //document.querySelector('#msg').className = 'alert alert-danger';
+                    }
+                }
+
+                // Add data to send with request
+                const data = new FormData();
+                data.append('value', value);
+                // Send request
+                request.send(data);
+                return false;
+                */
+                swal('The permissions feature is not complete yet!')
+            }
             /// all the users
             socket.on('allUsers', function (json) {
                 var content = ''
                 for (var i = 0; i < json.users.length; i++) 
                 {
-                    content +=
-                    `<div id="user_box">
-                        ${json.users[i]}
-                    </div><br>
-                    `
+                    // creator of room
+                    if (Object.values(json.users[i])[0] == 3)
+                    {
+                        content += `<button class="btn btn-success" style="width:100%;">${Object.keys(json.users[i])[0]}</button><br><br>`
+                    }
+                    // permitted moderator
+                    else if (Object.values(json.users[i])[0] == 2)
+                    {
+                        content += `<button class="btn btn-primary" style="width:100%;" onclick="swal('The permissions feature is not complete yet!')">${Object.keys(json.users[i])[0]}</button><br><br>`
+                    }
+                    else
+                    {
+                        content += `<button class="btn btn-danger" style="width:100%;" onclick="swal('The permissions feature is not complete yet!')">${Object.keys(json.users[i])[0]}</button><br><br>`
+                    }
                 }
                 document.querySelector('#users').innerHTML = content
             })
@@ -246,9 +360,9 @@
                 {
                     content +=
                     `<div id="message_box">
-                    <b>${json.messages[i].username}
-                    </b><br><br>
-                    ${json.messages[i].message}
+                        <b>${json.messages[i].username}
+                        </b><br><br>
+                        ${json.messages[i].message}
                     </div><br>
                     `
                 }

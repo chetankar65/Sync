@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))
@@ -46,6 +45,8 @@ room_moderators = dict()
 room_members_limit = dict()
 # all the people in one room
 room_members = dict()
+# room permissions (give and retract permissions for others to control the videos)
+room_permissions = dict()
 
 @app.route("/")
 def index():
@@ -75,13 +76,23 @@ def submit():
     room = str(uuid.uuid4())
     allLinks[room] = extract_video_id(link)
     room_members_count[room] = 1
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
     room_messages[room] = [{'message':'Start your conversation here!', 'username':'SyncApp'}]
     room_moderators[room] = session.get('user_id')
-    room_members[room] = []
+    room_permissions[room] = list()
+    room_members[room] = [{username: 3}]
     # send json
     redirect_link = f'/room/{room}'
     # redirect to the redirect link
     return redirect(redirect_link)
+
+@app.route('/set_permission', methods=['POST'])
+def set_permission():
+    room = request.form.get('code')
+    room_permissions[room].append(session.get('user_id'))
+    # send a json request
+    return jsonify({'success': True, 'msg':'Permission given!'})
 
 @app.route('/join_room', methods=['POST'])
 def join():
@@ -128,6 +139,8 @@ def logout():
 @app.route("/room/<string:code>")
 def room(code):
     if(session.get('user_id')):
+        rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+        username = rows.username
         if (allLinks.get(code) != None):
             room_members_count[code] += 1
             link = allLinks[code]
@@ -143,10 +156,14 @@ def room(code):
 
 @socketio.on('join')
 def on_join(data):
-    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
-    username = rows.username
     room = data['code']
-    room_members[room].append(username)
+    if (room_moderators[room] == session.get('user_id')):
+        rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+        username = rows.username
+    else:
+        rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+        username = rows.username
+        room_members[room].append({username: 1})
     join_room(room)
     print('Join room')
     greet = f'{username} just dropped by!'
@@ -157,9 +174,12 @@ def on_leave(data):
     rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
     username = rows.username
     room = data['code']
-    print(room)
     leave_room(room)
-    room_members[room].remove(username)
+    for i in range(len(room_members[room])):
+        var = room_members[room][i]
+        if (var.get(username) == username):
+            del var
+    print('Left room')
     room_members_count[room] -= 1
     if (room_members_count[room] == 0):
         room_members_count.pop(room)
