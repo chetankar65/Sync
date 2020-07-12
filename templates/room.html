@@ -43,10 +43,41 @@
         }
 
         #message_box {
-            background-color: cyan;
+            background-color: gold;
             width: 100%;
             padding: 10px;
             border-radius: 10px;
+        }
+
+        #user_message_box {
+            background-color: lime;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .user_box {
+            background-color: red;
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .admin_box {
+            background-color: green;
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .permitted_box {
+            background-color: blue;
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+            color: white;
         }
 
         #progress-bar {
@@ -54,6 +85,15 @@
             width: 100%;
             height: 20px;
             cursor: pointer;
+        }
+
+        #youtube {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            outline: none;
         }
 
         #controls i {
@@ -75,71 +115,448 @@
             bottom: 0;
         }
 
-        .container
-        {
+        #permissions h5 {
+            color: white;
+        }
+
+        .container {
             width: 100%;
             height: 50%;
         }
 
-        #creator {
-            background-color: green;
-            width: 150px;
-            padding:20px;
-            height: 100px;
-            color:white;
+        .sidenav {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: rgb(79, 12, 214);
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
         }
 
-        #admin {
-            background-color: blue;
-            width: 150px;
-            padding:20px;
-            height: 100px;
-            color:white;
+        .sidenav p {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #f7f3f1;
+            display: block;
+            transition: 0.3s;
         }
 
-        #standby {
-            background-color: red;
-            width: 150px;
-            padding:20px;
-            height: 100px;
-            color:white;
+        .sidenav p:hover {
+            color: #f1f1f1;
+        }
+
+        .sidenav .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        #main {
+            transition: margin-left .5s;
+            padding: 16px;
+        }
+
+        @media screen and (max-height: 450px) {
+            .sidenav {
+                padding-top: 15px;
+            }
+
+            .sidenav a {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
-
-<body onunload="exit()">
+<body>
     <audio id="message_audio">
         <source src="/static/notification.mp3" type="audio/mpeg">
     </audio>
     <div class='row'>
         <div class="col-lg-8" align='center'>
-            <h3>Room ID : {{room}} &nbsp; &nbsp; <button class="btn btn-primary" onclick="copyToClipboard()">+ Invite</button></h3><br>
+            <h3>Room ID : {{room}} &nbsp; &nbsp; <button class="btn btn-primary" onclick="copyToClipboard()">+
+                    Invite</button></h3><br>
             <div class="container">
-                <div id="player" data-plyr-provider="youtube" data-plyr-embed-id="{{link}}"></div>
+                <video id="player" style="--plyr-color-main: #1ac266;">
+                </video>
             </div>
-            <div class="jumbotron" id="controls">
+            <div class="jumbotron">
                 <button class="btn btn-success" id="mute"><i class='fas fa-volume-down'></i></button>
                 <button class="btn btn-info" id="fullscreen"><i class='fas fa-expand'></i></button>
-                <button class="btn btn-secondary" id="mic" onclick="swal('The voicechat feature is not complete yet!')"><i class='fas fa-microphone'></i></button>
+                <button class="btn btn-secondary" id="mic" onclick="muteLocalAudio()"><i class='fas fa-microphone'></i></button>
                 <button class="btn btn-primary" id="notification"><i class='fas fa-bell'></i></button>
                 <br><br>
-                {% if control_bool %}
+                <div id="controls"></div>
+            </div>
+        </div>
+        <br><br>
+        <div class="col-lg-4" style="width:100%;">
+            <button class='btn btn-danger' onclick="exit()">Exit room</button>
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">
+                What the colors mean?
+            </button>
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#voicechat">
+                Voicechat
+            </button>
+            <br><br>
+            <h3>Chat :</h3>
+            <hr>
+            <div id="messages" style="height:400px;overflow:scroll;" align='left'>
+            </div>
+            <br>
+            <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
+            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()"
+                id="send_btn">Send message</button>
+            <hr>
+            <h3 align='center'>Permissions</h3><br>
+            <div id="users" align='center' style="height:150px;overflow:scroll;">
+            </div>
+            <hr>
+            <ul>
+                <li>Powered by <a href="https://github.com/sampotts/plyr">Plyr.js</a> and <a
+                        href="https://developers.google.com/youtube/iframe_api_reference">Youtube API</a></li>
+                <li>Sourced at <a href="https://github.com/chetankar65/Sync">Github</a></li>
+            </ul>
+            <br>
+            <h3>Blocked users</h3>
+            <div id="blockerUsers">
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div class="modal" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Colors</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body" align='center'>
+                    <p class="admin_box">Group creator</p><br>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-6">
+                            Removing permission<br>
+                            <button class="btn btn-danger" style="width: 100%;">&#10007;</button><br>
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-6">
+                            Set permission <br>
+                            <button class="btn btn-success" style="width: 100%;">&#10004;</button><br>
+                        </div>
+                    </div><br>
+                    <p class="permitted_box">Group moderator</p><br>
+                    <p class="user_box">Standby</p><br>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="voicechat">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Voicechat</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <!-- Modal body -->
+                <div class="modal-body" align='center'>
+                    <div id="onlineUsers">
+
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        /*
+            Check frequently video state:
+            -1 - unstarted
+            0 - ended
+            1 - playing
+            2 - paused
+            3 - buffering
+            5 - video cued
+        */
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
+        var audio = document.getElementById("message_audio")
+        var user = "{{ user | safe}}"
+        var moderator = "{{ moderator | safe}}"
+        var code = "{{ room | safe }}"
+        var muteAudio = false
+        // Initialise video
+        const player = new Plyr('#player', { 'controls': 0 });
+
+        function copyToClipboard() {
+            swal('Copy the link: ' + window.location.href)
+        }
+
+        // exit the room
+        function exit() {
+            swal("Leaving...", { button: false })
+            socket.emit('leave', { 'code': code })
+            setTimeout(redirect, 3000)
+        }
+
+        // exit
+        window.addEventListener('beforeunload', function (event) {
+            exit()
+        });
+
+        // update progress bar
+        function updateProgressBar() {
+            document.getElementById('progress').setAttribute('max', player.duration)
+            document.getElementById('progress').setAttribute('value', player.currentTime)
+            document.getElementById('time').innerHTML = `${player.currentTime}`.toHHMMSS();
+            document.getElementById('duration').innerHTML = `${player.duration}`.toHHMMSS();
+        }
+
+        ////////////////////
+        // Audio chat
+        function muteLocalAudio() {
+            if (muteAudio == false) {
+                muteAudio = true
+                document.getElementById('mic').innerHTML = `<i class='fas fa-microphone-slash'></i>`
+            } else {
+                muteAudio = false
+                document.getElementById('mic').innerHTML = `<i class='fas fa-microphone'></i>`
+            }
+        }
+        var constraints = {audio: true};
+        // Media Devices
+        navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+            /////
+            var mediaRecorder = new MediaRecorder(mediaStream);
+            mediaRecorder.ignoreMutedMedia = false
+            mediaRecorder.onstart = function (e) {
+                // diving the audio into chunks
+                this.chunks = [];
+            };
+
+            mediaRecorder.ondataavailable = function (e) {
+                // push all the audio bytes to radio
+                if (muteAudio == false) {
+                    this.chunks.push(e.data);
+                    var blob = new Blob(this.chunks);
+                    socket.emit('radio', {'blob': blob, 'code': code});
+                }
+            };
+
+            mediaRecorder.start();
+
+            setInterval(function () {
+                mediaRecorder.stop()
+                mediaRecorder.start();
+            }, 300);
+        });
+        ////////////////////
+        // keyValue
+        document.addEventListener('DOMContentLoaded', () => {
+            var notificationSound = true
+            /// Playing the audio
+            function playAudio() {
+                audio.play();
+            }
+            // Pausing the audio
+            function pauseAudio() {
+                audio.pause();
+            }
+            // Load all the users
+            function loadAllUsers(code) {
+                socket.emit('get users', { 'code': code });
+            }
+            // load the video
+            function loadTheVideo(code) {
+                socket.emit('video', { 'code': code })
+            }
+            // Load all the messages
+            function loadAllMessages(code) {
+                socket.emit('get messages', { 'code': code });
+            }
+            // Send message
+            socket.on('connect', () => {
+                socket.emit('join', { 'code': code })
+                loadAllMessages(code)
+                loadAllUsers(code)
+                loadTheVideo(code)
+                return false;
+            })
+            // Notification controls
+            jQuery(document.body).on('click', '#notification', function (event) {
+                if (notificationSound) {
+                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell-slash'></i>"
+                    document.getElementById('message_audio').muted = true
+                    notificationSound = false
+                }
+                else {
+                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell'></i>"
+                    document.getElementById('message_audio').muted = false
+                    notificationSound = true
+                }
+            });
+            // Here we run the video
+            socket.on('left', function (json) {
+                swal(json.greet, { button: false })
+                playAudio()
+            })
+            /// all the users
+            socket.on('allUsers', function (json) {
+                var content = ''
+                for (var i = 0; i < json.users.length; i++) {
+                    if (json.users[i] == json.moderator) {
+                        content += `<p class="admin_box">${json.users[i]} &nbsp;</p><br>`
+                    } else if (json.permissions.includes(json.users[i]) === true) {
+                        if (user == json.moderator) {
+                            content += `<button class="btn btn-primary remove" style="width:100%;" value="${json.users[i]}">${json.users[i]} &nbsp; &#10007;</button><br>`
+                        } else {
+                            content += `<p class="permitted_box">${json.users[i]}</p><br>`
+                        }
+                    } else {
+                        if (json.permissions.includes(json.users[i]) === false) {
+                            if (user == json.moderator) {
+                                content += `<button class="btn btn-danger permit" style="width:100%;" value="${json.users[i]}">${json.users[i]} &nbsp; &#10004;</button><br>`
+                            } else {
+                                content += `<p class="user_box">${json.users[i]}</p><br>`
+                            }
+                        }
+                    } 
+                }
+                // voiceChat content
+                document.querySelector('#users').innerHTML = content
+                var voicechatContent = ''
+                for (var x = 0; x < json.users.length; x++) {
+                    voicechatContent += `<p>${json.users[x]} &nbsp; &nbsp;<i class='fas fa-microphone'></i><p>`
+                }
+
+                document.getElementById('onlineUsers').innerHTML = voicechatContent
+            })
+            // Error message
+            socket.on('error', function (json) {
+                swal(json.err, { button: false })
+            })
+            // Voice chat socket
+            socket.on('voice', function (arrayBuffer) {
+                var blob = new Blob([arrayBuffer], { 'type' : 'audio/webm;codecs=opus' });
+                var audio = document.createElement('audio');
+                audio.src = window.URL.createObjectURL(blob);
+                audio.play();
+            });
+            // Enter button
+            var input = document.getElementById('message')
+            input.addEventListener("keyup", function (event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    document.getElementById("send_btn").click();
+                }
+            });
+            // Scroll to the bottom of the messages division
+            function scrollToBottom(id) {
+                var div = document.getElementById(id);
+                div.scrollTop = div.scrollHeight - div.clientHeight;
+            }
+            // get all the messages
+            socket.on('allmessages', function (json) {
+                var content = ''
+                for (var i = 0; i < json.messages.length; i++) {
+                    if (user == json.messages[i].username) {
+                        content +=
+                        `<div id="user_message_box">
+                            <b>${json.messages[i].username}</b><br><br>
+                            ${json.messages[i].message}
+                        </div><br>
+                        `
+                    } else {
+                        content +=
+                        `<div id="message_box">
+                            <b>${json.messages[i].username}</b><br><br>
+                            ${json.messages[i].message}
+                        </div><br>
+                        `
+                    }
+                }
+                document.querySelector('#messages').innerHTML = content
+                scrollToBottom("messages")
+                playAudio()
+            })
+            // Hour, minute, seconds
+            String.prototype.toHHMMSS = function () {
+                var sec_num = parseInt(this, 10); // don't forget the second param
+                var hours = Math.floor(sec_num / 3600);
+                var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+                var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+                if (hours < 10) { hours = "0" + hours; }
+                if (minutes < 10) { minutes = "0" + minutes; }
+                if (seconds < 10) { seconds = "0" + seconds; }
+                return hours + ':' + minutes + ':' + seconds;
+            }
+            // change the video URL
+            jQuery(document.body).on('click', '#changeUrl', function (event) {
+                var link = document.getElementById('youtube').value
+                socket.emit('change video', { 'code': code, 'link': link })
+                loadTheVideo(code)
+            });
+            // remove permission
+            jQuery(document.body).on('click', '.remove', function (event) {
+                var user = $(this).val()
+                socket.emit('remove permission', { 'code': code, 'user': user })
+                loadAllUsers(code)
+                loadTheVideo(code)
+            });
+            // Permit permission
+            jQuery(document.body).on('click', '.permit', function (event) {
+                var user = $(this).val()
+                socket.emit('set permission', { 'code': code, 'user': user })
+                loadAllUsers(code)
+                loadTheVideo(code)
+            });
+            /// give alert if someone left
+            socket.on('video-player', function (json) {
+                player.source = {
+                    type: 'video',
+                    sources:
+                        [
+                            {
+                                src: json.link,
+                                provider: 'youtube',
+                            },
+                        ],
+                }
+
+                var content = `
                 <p>Use these controls to sync with your partner.</p><br>
                 <span id="time">00:00</span> / <span id="duration">00:00</span>
                 <input type="range" id="progress" style="width: 100%;" max="" value="">
-                <button class="btn btn-primary" id="togglePlay"><i class='fas fa-play'></i>&nbsp;<i class='fas fa-pause'></i></button>
+                <button class="btn btn-primary" id="togglePlay"><i class='fas fa-play'></i>&nbsp;<i
+                        class='fas fa-pause'></i></button>
                 <button class="btn btn-danger" id="restart"><i class='fas fa-redo'></i></button>
                 <button class="btn btn-info" id="rewind"><i class='fas fa-step-backward'></i></button>
                 <button class="btn btn-info" id="forward"><i class='fas fa-step-forward'></i></button>
                 <button class="btn btn-warning" id="sync"><i class='fas fa-sync'></i></button><br><br>
-                <!--
-                <form class="form-inline justify-content-center">
-                    <div class="form-group mx-sm-3 mb-2">
-                    <input type="text" class="form-control" id="youtube" placeholder="Youtube URL">
-                    </div>
-                    <button type="submit" class="btn btn-primary mb-2">Change URL</button>
-                </form>
-                -->
+                <div class="form-group mx-sm-3 mb-2">
+                    <input type="text" id="youtube" placeholder="Youtube URL" style="width:50%;">
+                    <button class="btn btn-primary mb-2" id="changeUrl" style="padding:12px 20px;">Change URL</button>
+                </div>
                 <br><br>
                 <div class="row">
                     <div class="col-sm-6 col-lg-6 col-6 col-md-6">
@@ -164,236 +581,25 @@
                         </select>
                     </div>
                 </div>
-                {% else %}
-                <div class="row">
-                    <h3>Only the creator of the room can control the video!</h3>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <br><br>
-        <div class="col-lg-4" style="width:100%;">
-            <button class='btn btn-danger' onclick="exit()">Exit room</button>
-            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">
-                What the colors mean?
-            </button>
-            <br><br>
-            <h3>Chat :</h3>
-            <hr>
-            <div id="messages" style="height:400px;overflow:scroll;" align='left'>
-            </div>
-            <br>
-            <input type="text" id="message" style="width:100%;padding:20px;" placeholder="Message...">
-            <button style="padding: 12px 20px 12px;width:100%;" class="submit" onclick="send_message()" id="send_btn">Send message</button>
-            <hr>
-            <h3 align='center'>Permissions</h3><br>
-            <div id="users" align='center' style="height:150px;overflow:scroll;">
-            </div>
-            <hr>
-            <ul>
-                <li>Powered by <a href="https://github.com/sampotts/plyr">Plyr.js</a> and <a href="https://developers.google.com/youtube/iframe_api_reference">Youtube API</a></li>
-                <li>Sourced at <a href="https://github.com/chetankar65/Sync">Github</a></li>
-            </ul>
-        </div>
-    </div>
-    <!-- The Modal -->
-    <div class="modal" id="myModal">
-        <div class="modal-dialog">
-        <div class="modal-content">
-    
-            <!-- Modal Header -->
-            <div class="modal-header">
-            <h4 class="modal-title">Colors</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-    
-            <!-- Modal body -->
-            <div class="modal-body" align='center'>
-            <div id="creator"><p>Group creator</p></div>
-            <div id="admin"><p>Group moderator</p></div>
-            <div id="standby"><p>Standby</p></div> 
-            </div>
-    
-            <!-- Modal footer -->
-            <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-            </div>
-    
-        </div>
-        </div>
-    </div>
-    <script type="text/javascript">
-        /*
-            Check frequently video state:
-            -1 - unstarted
-            0 - ended
-            1 - playing
-            2 - paused
-            3 - buffering
-            5 - video cued
-        */
-        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
-        var audio = document.getElementById("message_audio")
-        var code = "{{ room | safe }}"
-        var controls = "{{control_bool | safe}}"
-
-        function copyToClipboard() {
-            swal('Copy the link: ' + window.location.href)
-        }
-
-        // keyValue
-        document.addEventListener('DOMContentLoaded', () => {
-            /// Playing the audio
-            var notificationSound = true
-            function playAudio() {
-                audio.play();
-            }
-            // Pausing the audio
-            function pauseAudio() {
-                audio.pause();
-            }
-            // Load all the users
-            function loadAllUsers(code) {
-                socket.emit('get users', { 'code': code });
-            }
-            // Load all the messages
-            function loadAllMessages(code) {
-                socket.emit('get messages', { 'code': code });
-            }
-            // Send message
-            socket.on('connect', () => {
-                socket.emit('join', { 'code': code })
-                loadAllMessages(code)
-                loadAllUsers(code)
-                return false;
+                `
+                if (json.moderator == user) {
+                    document.getElementById('controls').innerHTML = content
+                    setInterval(updateProgressBar, 1000)
+                }
+                else if (json.permitted_members.includes(user) === true) {
+                    document.getElementById('controls').innerHTML = content
+                    setInterval(updateProgressBar, 1000)
+                } else {
+                    document.getElementById('controls').innerHTML = '<h3>Only the creator of the room can control the video!</h3>'
+                }
             })
-            // Notification controls
-            jQuery(document.body).on('click', '#notification', function (event) {
-                if (notificationSound)
-                {
-                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell-slash'></i>"
-                    document.getElementById('message_audio').src = ""
-                    notificationSound = false
-                }
-                else
-                {
-                    document.getElementById('notification').innerHTML = "<i class='fas fa-bell'></i>"
-                    document.getElementById('message_audio').src = "/static/notification.mp3"
-                    notificationSound = true
-                }
-            });
-            /// give alert if someone left
-            socket.on('left', function (json) {
-                swal(json.greet, { button: false })
-                playAudio()
-            })
-            // XHR requests to set permissions
-            function set_permission(value) {
-                /*
-                // Initialize new request
-                const request = new XMLHttpRequest();
-                request.open('POST', '/set_permission');
-
-                // Callback function for when request completes
-                request.onload = () => {
-
-                    // Extract JSON data from request
-                    const data = JSON.parse(request.responseText);
-
-                    // Update the result div
-                    if (data.success) {
-                        location.reload()
-                    }
-                    else {
-                        //document.querySelector('#msg').innerHTML = data.msg;
-                        //document.querySelector('#msg').className = 'alert alert-danger';
-                    }
-                }
-
-                // Add data to send with request
-                const data = new FormData();
-                data.append('value', value);
-                // Send request
-                request.send(data);
-                return false;
-                */
-                swal('The permissions feature is not complete yet!')
-            }
-            /// all the users
-            socket.on('allUsers', function (json) {
-                var content = ''
-                for (var i = 0; i < json.users.length; i++) 
-                {
-                    // creator of room
-                    if (Object.values(json.users[i])[0] == 3)
-                    {
-                        content += `<button class="btn btn-success" style="width:100%;">${Object.keys(json.users[i])[0]}</button><br><br>`
-                    }
-                    // permitted moderator
-                    else if (Object.values(json.users[i])[0] == 2)
-                    {
-                        content += `<button class="btn btn-primary" style="width:100%;" onclick="swal('The permissions feature is not complete yet!')">${Object.keys(json.users[i])[0]}</button><br><br>`
-                    }
-                    else
-                    {
-                        content += `<button class="btn btn-danger" style="width:100%;" onclick="swal('The permissions feature is not complete yet!')">${Object.keys(json.users[i])[0]}</button><br><br>`
-                    }
-                }
-                document.querySelector('#users').innerHTML = content
-            })
-            // Enter button
-            var input = document.getElementById('message')
-            input.addEventListener("keyup", function (event) {
-                if (event.keyCode === 13) {
-                    event.preventDefault();
-                    document.getElementById("send_btn").click();
-                }
-            });
-            // Scroll to the bottom of the messages division
-            function scrollToBottom(id) {
-                var div = document.getElementById(id);
-                div.scrollTop = div.scrollHeight - div.clientHeight;
-            }
-            // get all the messages
-            socket.on('allmessages', function (json) {
-                var content = ''
-                for (var i = 0; i < json.messages.length; i++) 
-                {
-                    content +=
-                    `<div id="message_box">
-                        <b>${json.messages[i].username}
-                        </b><br><br>
-                        ${json.messages[i].message}
-                    </div><br>
-                    `
-                }
-                document.querySelector('#messages').innerHTML = content
-                scrollToBottom("messages")
-                playAudio()
-            })
-            // Initialise video
-            const player = new Plyr('#player', {'controls': 0});
-            // Hour, minute, seconds
-            String.prototype.toHHMMSS = function () {
-                var sec_num = parseInt(this, 10); // don't forget the second param
-                var hours   = Math.floor(sec_num / 3600);
-                var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-                var seconds = sec_num - (hours * 3600) - (minutes * 60);
-
-                if (hours   < 10) {hours   = "0" + hours;}
-                if (minutes < 10) {minutes = "0" + minutes;}
-                if (seconds < 10) {seconds = "0" + seconds;}
-                return hours + ':' + minutes + ':' + seconds;
-            }
             // Mute Video
             function muteVideo() {
-                if (player.muted)
-                {
+                if (player.muted) {
                     player.muted = false
                     document.getElementById('mute').innerHTML = `<i class='fas fa-volume-down'></i>`
                 }
-                else 
-                {
+                else {
                     player.muted = true
                     document.getElementById('mute').innerHTML = `<i class='fas fa-volume-mute'></i>`
                 }
@@ -406,28 +612,16 @@
             jQuery(document.body).on('click', '#fullscreen', function (event) {
                 player.fullscreen.toggle()
             });
-            // Updating progress bar
-            function updateProgressBar() {
-                document.getElementById('progress').setAttribute('max', player.duration)
-                document.getElementById('progress').setAttribute('value', player.currentTime)
-                document.getElementById('time').innerHTML = `${player.currentTime}`.toHHMMSS();
-                document.getElementById('duration').innerHTML = `${player.duration}`.toHHMMSS();
-            }
-            // Update the progress bar every one second
-            if (controls == "True")
-            {
-                setInterval(updateProgressBar, 1000)
-            }
             // sync
             function sync(time) {
-                socket.emit('sync videos', {'code': code, 'time': time})
+                socket.emit('sync videos', { 'code': code, 'time': time })
             }
             // sync
             function jump(jump) {
-                socket.emit('sync progress', {'code': code, 'jump': jump})
+                socket.emit('sync progress', { 'code': code, 'jump': jump })
             }
             // Progress bar
-            jQuery(document.body).on('input change', '#progress', function() {
+            jQuery(document.body).on('input change', '#progress', function () {
                 var newTime = event.target.value;
                 var toJump = newTime - player.currentTime
                 jump(toJump)
@@ -435,26 +629,25 @@
             // toggle video state
             jQuery(document.body).on('click', '#togglePlay', function (event) {
                 var control = true
-                socket.emit('control_video', {'control': control, 'code': code})
+                socket.emit('control_video', { 'control': control, 'code': code })
             });
             // speed of the video
             jQuery(document.body).on('change', '#speed', function (event) {
                 var speed = $(this).val();
-                socket.emit('control_speed', {'speed': speed, 'code': code})
+                socket.emit('control_speed', { 'speed': speed, 'code': code })
             });
             // Rewind
             jQuery(document.body).on('click', '#rewind', function (event) {
                 var value = $(this).val();
-                socket.emit('rewind', {'value': value, 'code': code})
+                socket.emit('rewind', { 'value': value, 'code': code })
             });
             // Forward
             jQuery(document.body).on('click', '#forward', function (event) {
                 var value = $(this).val();
-                socket.emit('forward', {'value': value, 'code': code})
+                socket.emit('forward', { 'value': value, 'code': code })
             });
             // quality of the video
-            jQuery(document.body).on('change', '#quality', function (event) 
-            {
+            jQuery(document.body).on('change', '#quality', function (event) {
                 player.quality = $(this).val()
             });
             // Syncing with partner
@@ -485,7 +678,8 @@
             })
             // Restart the video
             jQuery(document.body).on('click', '#restart', function (event) {
-                socket.emit('restart', {'value': true, 'code': code})
+                socket.emit('restart', { 'value': true, 'code': code })
+                document.getElementById('progress').setAttribute('value', 0)
             });
             // synced
             socket.on('synced', function (json) {
@@ -494,12 +688,10 @@
             })
             // synced
             socket.on('progress', function (json) {
-                if (json.jump > 0)
-                {
+                if (json.jump > 0) {
                     player.forward(json.jump)
                 }
-                else
-                {
+                else {
                     player.rewind(Math.abs(json.jump))
                 }
             })
@@ -522,12 +714,6 @@
         // function redirect
         function redirect() {
             window.location.replace("/")
-        }
-        // exit the room
-        function exit() {
-            swal("Leaving...", { button: false })
-            socket.emit('leave', { 'code': code })
-            setTimeout(redirect, 3000)
         }
     </script>
 </body>

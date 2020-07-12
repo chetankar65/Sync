@@ -8,6 +8,7 @@ import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
+from datetime import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
@@ -36,7 +37,6 @@ socketio = SocketIO(app)
 allLinks = dict()
 # all the messages
 room_messages = dict()
-# all the users (probably a session)
 # room member count
 room_members_count = dict()
 # room moderators
@@ -47,6 +47,11 @@ room_members_limit = dict()
 room_members = dict()
 # room permissions (give and retract permissions for others to control the videos)
 room_permissions = dict()
+# room passwords : Password protected rooms
+room_passwords = dict()
+# Hardblocked people
+room_blocked_people = dict()
+# to change permissions
 
 @app.route("/")
 def index():
@@ -75,30 +80,30 @@ def submit():
     link = request.form.get('youtube')
     room = str(uuid.uuid4())
     allLinks[room] = extract_video_id(link)
-    room_members_count[room] = 1
+    room_members_count[room] = 0
     rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
     username = rows.username
     room_messages[room] = [{'message':'Start your conversation here!', 'username':'SyncApp'}]
-    room_moderators[room] = session.get('user_id')
+    room_moderators[room] = username
     room_permissions[room] = list()
-    room_members[room] = [{username: 3}]
+    room_members[room] = list()
+    room_members_count[room] = 0
     # send json
     redirect_link = f'/room/{room}'
     # redirect to the redirect link
     return redirect(redirect_link)
-
-@app.route('/set_permission', methods=['POST'])
-def set_permission():
-    room = request.form.get('code')
-    room_permissions[room].append(session.get('user_id'))
-    # send a json request
-    return jsonify({'success': True, 'msg':'Permission given!'})
 
 @app.route('/join_room', methods=['POST'])
 def join():
     room = request.form.get('room')
     # send json
     return jsonify({'success': True, 'code': room})
+
+@socketio.on('radio')
+def video_controls(data):
+    blob = data['blob']
+    room = data['code']
+    socketio.emit('voice', blob, room = room, include_self = False)
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -141,13 +146,11 @@ def room(code):
     if(session.get('user_id')):
         rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
         username = rows.username
+        # check if username is in room permissions
         if (allLinks.get(code) != None):
-            room_members_count[code] += 1
             link = allLinks[code]
-            control_bool = False
-            if (room_moderators[code] == session.get('user_id')):
-                control_bool = True
-            return render_template('room.html', room = code, control_bool = control_bool, link = link)
+            # send user
+            return render_template('room.html', room = code, user = username, moderator = room_moderators[code])
         else:
             # send error 
             return render_template('roomerror.html')
@@ -157,17 +160,32 @@ def room(code):
 @socketio.on('join')
 def on_join(data):
     room = data['code']
-    if (room_moderators[room] == session.get('user_id')):
-        rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
-        username = rows.username
-    else:
-        rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
-        username = rows.username
-        room_members[room].append({username: 1})
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
     join_room(room)
+    if (username not in room_members[room]):
+        room_members[room].append(username)
+        room_members_count[room] += 1
     print('Join room')
     greet = f'{username} just dropped by!'
     socketio.emit("allRooms", {'greet': greet,'room': room}, room = room)
+
+@socketio.on('video')
+def video_controls(data):
+    room = data['code']
+    link = allLinks[room]
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
+    socketio.emit('video-player', {"link": link, 'moderator': room_moderators[room], 'permitted_members': room_permissions[room], 'current_user': username}, room = room)
+
+@socketio.on('change video')
+def change_video(data):
+    room = data['code']
+    link = data['link']
+    if (len(link) != 0 or allLinks[room] != None or extract_video_id(link) != None):
+        allLinks[room] = extract_video_id(link)
+    else:
+        socketio.emit('error', {"err": 'Give a link!'}, room = room)
 
 @socketio.on('leave')
 def on_leave(data):
@@ -175,11 +193,7 @@ def on_leave(data):
     username = rows.username
     room = data['code']
     leave_room(room)
-    for i in range(len(room_members[room])):
-        var = room_members[room][i]
-        if (var.get(username) == username):
-            del var
-    print('Left room')
+    room_members[room].remove(username)
     room_members_count[room] -= 1
     if (room_members_count[room] == 0):
         room_members_count.pop(room)
@@ -187,11 +201,14 @@ def on_leave(data):
         allLinks.pop(room)
         room_moderators.pop(room)
         room_members.pop(room)
+        room_permissions.pop(room)
+        print('No memory leak!')
     greet = f'{username} has left the room.'
     socketio.emit("left" , {'greet': greet} , room = room)
 
 @socketio.on('message')
 def send_message(data):
+    # current date and time
     rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
     username = rows.username
     message = data['message']
@@ -216,7 +233,26 @@ def control_time(data):
 def getUsers(data):
     room = data['code']
     user_list = room_members[room]
-    socketio.emit('allUsers', {'users': user_list}, room = room)
+    rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()
+    username = rows.username
+    permissions = room_permissions[room]
+    socketio.emit('allUsers', {'users': user_list, 'moderator': room_moderators[room], 'permissions': permissions, 'current_user': username}, room = room)
+
+@socketio.on('set permission')
+def get_permission(data):
+    room = data['code']
+    user = data['user']
+    permitted = room_permissions[room]
+    if user not in permitted:
+        permitted.append(user)
+
+@socketio.on('remove permission')
+def remove_permission(data):
+    room = data['code']
+    user = data['user']
+    permitted = room_permissions[room]
+    if user in permitted:
+        permitted.remove(user)
 
 @socketio.on('control_video')
 def control_video(data):
@@ -265,6 +301,5 @@ def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('404.html'), 404
 
-# we need to load all controls in the front end as well
 if __name__ == '__main__':
     socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')
