@@ -330,7 +330,7 @@
             document.getElementById('time').innerHTML = `${player.currentTime}`.toHHMMSS();
             document.getElementById('duration').innerHTML = `${player.duration}`.toHHMMSS();
         }
-
+        /*
         ////////////////////
         // Audio chat
         function muteLocalAudio() {
@@ -369,6 +369,7 @@
                 mediaRecorder.start();
             }, 300);
         });
+        */
         ////////////////////
         // keyValue
         document.addEventListener('DOMContentLoaded', () => {
@@ -455,12 +456,14 @@
                 swal(json.err, { button: false })
             })
             // Voice chat socket
+            /*
             socket.on('voice', function (arrayBuffer) {
                 var blob = new Blob([arrayBuffer], { 'type' : 'audio/webm;codecs=opus' });
                 var audio = document.createElement('audio');
                 audio.src = window.URL.createObjectURL(blob);
                 audio.play();
             });
+            */
             // Enter button
             var input = document.getElementById('message')
             input.addEventListener("keyup", function (event) {

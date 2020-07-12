@@ -98,13 +98,13 @@ def join():
     room = request.form.get('room')
     # send json
     return jsonify({'success': True, 'code': room})
-
+'''
 @socketio.on('radio')
 def video_controls(data):
     blob = data['blob']
     room = data['code']
     socketio.emit('voice', blob, room = room, include_self = False)
-
+'''
 @app.route('/register', methods=['POST'])
 def register():
     email = request.form.get("email")
