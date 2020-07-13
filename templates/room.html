@@ -298,7 +298,7 @@
             3 - buffering
             5 - video cued
         */
-        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port)
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port, {secure: true})
         var audio = document.getElementById("message_audio")
         var user = "{{ user | safe}}"
         var moderator = "{{ moderator | safe}}"
