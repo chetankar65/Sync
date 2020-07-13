@@ -344,6 +344,7 @@
         }
         var constraints = {audio: true};
         // Media Devices
+        /*
         navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
             /////
             var mediaRecorder = new MediaRecorder(mediaStream);
@@ -369,6 +370,7 @@
                 mediaRecorder.start();
             }, 300);
         });
+        */
         
         ////////////////////
         // keyValue
@@ -456,14 +458,14 @@
                 swal(json.err, { button: false })
             })
             // Voice chat socket
-            
+            /*
             socket.on('voice', function (arrayBuffer) {
                 var blob = new Blob([arrayBuffer], { 'type' : 'audio/webm;codecs=opus' });
                 var audio = document.createElement('audio');
                 audio.src = window.URL.createObjectURL(blob);
                 audio.play();
             });
-            
+            */
             // Enter button
             var input = document.getElementById('message')
             input.addEventListener("keyup", function (event) {
