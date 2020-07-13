@@ -9,7 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
 from datetime import datetime
-DATABASE_URL = os.getenv("DATABASE_URL")
+#DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync"
 # Set up database
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))
@@ -26,7 +27,7 @@ def extract_video_id(url):
         if query.path == '/watch': return parse_qs(query.query)['v'][0]
         if query.path[:7] == '/embed/': return query.path.split('/')[2]
         if query.path[:3] == '/v/': return query.path.split('/')[2]
-    # fail?
+    # fail?l
     return None
 
 app = Flask(__name__)
@@ -98,13 +99,13 @@ def join():
     room = request.form.get('room')
     # send json
     return jsonify({'success': True, 'code': room})
-'''
+
 @socketio.on('radio')
 def video_controls(data):
     blob = data['blob']
     room = data['code']
     socketio.emit('voice', blob, room = room, include_self = False)
-'''
+
 @app.route('/register', methods=['POST'])
 def register():
     email = request.form.get("email")
@@ -302,4 +303,5 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 if __name__ == '__main__':
-    socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')
+    app.run()
+    #socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')
