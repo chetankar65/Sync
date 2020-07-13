@@ -302,5 +302,4 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 if __name__ == '__main__':
-    app.run()
-    #socketio.run(app, policy_server = False, transports = 'websocket, xhr-polling, xhr-multipart')
+    app.run(ssl_context = "adhoc")
