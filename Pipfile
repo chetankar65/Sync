@@ -11,6 +11,7 @@ gunicorn = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
 urllib3 = "*"
+eventlet = "*"
 gevent-websocket = "*"
 flask-socketio = "*"
 

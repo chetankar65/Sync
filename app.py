@@ -11,6 +11,7 @@ import psycopg2
 from datetime import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 # Set up database
+
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))
 

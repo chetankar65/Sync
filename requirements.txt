@@ -5,3 +5,4 @@ SQLAlchemy
 urllib3
 flask_socketio
 gevent-websocket
+eventlet
