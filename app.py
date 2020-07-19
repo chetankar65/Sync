@@ -65,10 +65,11 @@ room_blocked_people = dict()
 
 @app.route("/")
 def index():
+    form = PostForm()
     if(session.get('user_id')):
         return redirect('/dashboard')
     else:
-        return render_template('index.html')
+        return render_template('index.html', form = form)
 
 @app.route('/dashboard')
 def dashboard():
