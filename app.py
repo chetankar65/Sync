@@ -12,9 +12,8 @@ import psycopg2
 from datetime import datetime
 import string
 import random
-#DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 # Set up database
-DATABASE_URL = "postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync"
 
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))

@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(request.responseText);
             // Update the result div
             if (data.success) {
-                window.location.replace('/')
+                location.reload()
             }
             else {
                 document.querySelector('#msg').innerHTML = data.msg;
