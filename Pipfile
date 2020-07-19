@@ -13,6 +13,7 @@ psycopg2 = "*"
 urllib3 = "*"
 gevent-websocket = "*"
 flask-socketio = "*"
+flask_csrf = "*"
 
 [requires]
 python_version = "3.7"
