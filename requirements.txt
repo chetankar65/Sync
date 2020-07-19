@@ -5,4 +5,4 @@ SQLAlchemy
 urllib3
 flask_socketio
 gevent-websocket
-flask_csrf
+flask_wtf
