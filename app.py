@@ -73,8 +73,9 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
+    form = PostForm()
     if(session.get('user_id')):
-        return render_template('dashboard.html')
+        return render_template('dashboard.html', form = form)
     else:
         return redirect('/')
 
