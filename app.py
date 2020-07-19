@@ -4,13 +4,17 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, send
 import uuid
 from urllib.parse import urlparse, parse_qs
 import hashlib
+from flask_wtf.csrf import CSRFProtect
 # Import all database dependencies
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 import psycopg2
 from datetime import datetime
-DATABASE_URL = os.getenv("DATABASE_URL")
+import string
+import random
+#DATABASE_URL = os.getenv("DATABASE_URL")
 # Set up database
+DATABASE_URL = "postgresql+psycopg2://chetu:chetD0ne@localhost:5432/sync"
 
 engine = create_engine(DATABASE_URL) #Postgres database URL hosted on heroku
 db = scoped_session(sessionmaker(bind=engine))
@@ -30,7 +34,13 @@ def extract_video_id(url):
     # fail?l
     return None
 
+def generate_url():
+    N = 9
+    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k = N))
+    return str(res)
+
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.config["SECRET_KEY"] = os.getenv('sync')
 socketio = SocketIO(app)
 
@@ -79,7 +89,7 @@ def register_page():
 def submit():
     # set admin everytime someone creates a room
     link = request.form.get('youtube')
-    room = str(uuid.uuid4())
+    room = generate_url()
     allLinks[room] = extract_video_id(link)
     room_members_count[room] = 0
     rows = db.execute("SELECT username FROM users WHERE user_id = :user_id",{"user_id":session.get('user_id')}).fetchone()

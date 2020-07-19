@@ -94,6 +94,7 @@
     <hr>
     <div align='center' id="main">
         <form id="form" action="/create_room" method="POST">
+            {{ form.csrf_token }}
             <h3>Create a room:</h3><br>
             <input type="text" name="youtube" id="youtube" placeholder="Youtube link" required><br>
             <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Create a room">
@@ -128,6 +129,7 @@
             // Add data to send with request
             const data = new FormData();
             data.append('room', code);
+            data.append('csrf_token', "{{ csrf_token() | safe}}")
             // Send request
             request.send(data);
             return false;

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data.append('email', email);
         data.append('username', username);
         data.append('password', pass);
-
+        data.append('csrf_token', "{{ csrf_token() | safe}}")
         // Send request
         request.send(data);
         return false;
