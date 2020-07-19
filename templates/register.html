@@ -62,8 +62,13 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
 <script>
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 document.addEventListener('DOMContentLoaded', () => {
-
     document.querySelector('#form').onsubmit = () => {
         var email = document.querySelector('#email').value
         var username = document.querySelector('#username').value
