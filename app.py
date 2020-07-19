@@ -73,7 +73,7 @@ def index():
 
 @app.route('/dashboard')
 def dashboard():
-    form = PostForm()
+    form = csrf
     if(session.get('user_id')):
         return render_template('dashboard.html', form = form)
     else:
