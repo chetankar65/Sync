@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = new FormData();
         data.append('username', username);
         data.append('password', pass);
-        data.append('csrf_token', "{{ csrf_token() | safe}}")
+        data.append('csrf_token', "{{ csrf_token() | safe }}")
         // Send request
         request.send(data);
         return false;

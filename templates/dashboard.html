@@ -94,9 +94,9 @@
     <hr>
     <div align='center' id="main">
         <form id="form" action="/create_room" method="POST">
-            {{ form.csrf_token }}
             <h3>Create a room:</h3><br>
             <input type="text" name="youtube" id="youtube" placeholder="Youtube link" required><br>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" hidden>
             <input type="submit" style='padding: 12px 20px 12px;' class="submit" value="Create a room">
         </form>
         <br>
