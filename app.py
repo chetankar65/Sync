@@ -68,7 +68,7 @@ def index():
     if(session.get('user_id')):
         return redirect('/dashboard')
     else:
-        return render_template('index.html', form = form)
+        return render_template('index.html')
 
 @app.route('/dashboard')
 def dashboard():
